@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sistem Absensi OSIS - SMK Dian Al Mustarih</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    :root {
+      --primary-blue: #0b4da2;
+      --primary-blue-dark: #073573;
+      --primary-blue-light: #e8f1fc;
+      --accent-yellow: #ffc107;
+      --accent-yellow-hover: #e0a800;
+      --bg-surface: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-subtle: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: rgba(15, 23, 42, 0.09);
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 6px 20px rgba(11, 77, 162, 0.08);
+    }
+    [data-theme="dark"] {
+      --primary-blue: #3b82f6;
+      --primary-blue-dark: #1d4ed8;
+      --primary-blue-light: rgba(59, 130, 246, 0.16);
+      --bg-surface: #0b1120;
+      --bg-card: #111827;
+      --bg-subtle: #1e293b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border-color: rgba(148, 163, 184, 0.16);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      background-color: var(--bg-surface);
+      color: var(--text-main);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      padding-bottom: 84px;
+    }
+    @media (min-width: 992px) { body { padding-bottom: 24px; } }
+    [data-theme="dark"] .card-custom,
+    [data-theme="dark"] .admin-sidebar,
+    [data-theme="dark"] .stat-card,
+    [data-theme="dark"] .modal-content {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    [data-theme="dark"] .bg-light, [data-theme="dark"] .bg-white { background-color: var(--bg-subtle) !important; color: var(--text-main) !important; }
+    [data-theme="dark"] .form-control, [data-theme="dark"] .form-select, [data-theme="dark"] .input-group-text {
+      background-color: var(--bg-subtle); color: var(--text-main); border-color: var(--border-color);
+    }
+    [data-theme="dark"] .table { color: var(--text-main); border-color: var(--border-color); }
+    [data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+    [data-theme="dark"] .text-dark { color: var(--text-main) !important; }
+    [data-theme="dark"] .border { border-color: var(--border-color) !important; }
+    .header-box {
+      background: linear-gradient(135deg, #0b4da2, #073573);
+      color: #ffffff; border-bottom: 4px solid var(--accent-yellow);
+      position: sticky; top: 0; z-index: 1030;
+    }
+    .header-logo { height: 42px; width: auto; object-fit: contain; background-color: #ffffff; padding: 3px 6px; border-radius: 8px; }
+    .header-btn-icon {
+      width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.1); color: #ffffff; cursor: pointer;
+    }
+    .card-custom { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; box-shadow: var(--shadow-md); }
+    .fade-in-up { animation: fadeInUp 0.25s ease forwards; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .btn-primary-custom { background-color: var(--primary-blue); border-color: var(--primary-blue); color: #ffffff; }
+    .btn-primary-custom:hover { background-color: var(--primary-blue-dark); border-color: var(--primary-blue-dark); color: #ffffff; }
+    .btn-accent-yellow { background-color: var(--accent-yellow); border-color: var(--accent-yellow); color: #0f172a; font-weight: 700; }
+    .btn-accent-yellow:hover { background-color: var(--accent-yellow-hover); color: #0f172a; }
+    .kelas-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    @media (max-width: 576px) { .kelas-btn-grid { grid-template-columns: repeat(2, 1fr); } }
+    .btn-kelas-option {
+      border: 2px solid var(--border-color); background-color: var(--bg-card); color: var(--primary-blue);
+      font-weight: 700; padding: 10px 8px; border-radius: 12px; text-align: center; min-height: 56px; font-size: 0.9rem; cursor: pointer;
+    }
+    .btn-kelas-option.active { background-color: var(--primary-blue); border-color: var(--primary-blue); color: #ffffff; }
+    .qr-upload-box { border: 2.5px dashed var(--primary-blue); background-color: var(--primary-blue-light); border-radius: 14px; padding: 20px 12px; text-align: center; cursor: pointer; }
+    .mobile-bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border-color);
+      display: flex; justify-content: space-around; padding: 8px 4px; z-index: 1030; box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    }
+    .mobile-nav-item {
+      border: none; background: transparent; color: var(--text-muted); font-size: 0.72rem; font-weight: 600;
+      display: flex; flex-direction: column; align-items: center; padding: 4px 12px; border-radius: 8px; cursor: pointer;
+    }
+    .mobile-nav-item i { font-size: 1.35rem; margin-bottom: 2px; }
+    .mobile-nav-item.active { color: var(--primary-blue); background: var(--primary-blue-light); }
+    .stat-card { border-radius: 12px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-left: 4px solid var(--primary-blue); box-shadow: var(--shadow-sm); height: 100%; }
+    .dashboard-progress-card {
+      position: relative; overflow: hidden; padding: 18px 20px !important; border: 1px solid rgba(11,77,162,.10); border-radius: 18px;
+      background: linear-gradient(115deg, var(--bg-card) 0%, var(--primary-blue-light) 100%); box-shadow: 0 8px 24px rgba(11,77,162,.07);
+    }
+    .dashboard-stat-card {
+      min-height:88px; display:flex; align-items:center; gap:12px; padding:14px !important;
+      border:1px solid var(--border-color); border-left:0 !important; border-radius:16px !important; box-shadow:0 5px 18px rgba(15,23,42,.045);
+    }
+    .dashboard-stat-icon { width:42px; height:42px; flex:0 0 42px; display:grid; place-items:center; border-radius:13px; font-size:1.15rem; }
+    .dashboard-stat-blue .dashboard-stat-icon { background:#e8f1fc; color:#0b4da2; }
+    .dashboard-stat-green .dashboard-stat-icon { background:#dcfce7; color:#15803d; }
+    .dashboard-stat-red .dashboard-stat-icon { background:#fee2e2; color:#dc2626; }
+    .dashboard-stat-yellow .dashboard-stat-icon { background:#fef3c7; color:#b77900; }
+    .dashboard-section-card { border-radius:18px !important; padding:18px !important; }
+    .kelas-monitor-card { height:100%; padding:12px; border:1px solid var(--border-color); border-radius:14px; background:var(--bg-subtle); }
+    .kelas-monitor-name { color:var(--primary-blue); font-size:.78rem; font-weight:800; }
+    .kelas-monitor-count { color:var(--text-main); font-size:1.05rem; font-weight:800; margin:5px 0 8px; }
+    .kelas-monitor-track { height:6px; border-radius:99px; background:rgba(100,116,139,.16); overflow:hidden; }
+    .kelas-monitor-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#2563eb,#38bdf8); }
+    .kelas-monitor-foot { display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:.67rem; color:var(--text-muted); font-weight:700; }
+    .preview-box { max-width: 200px; max-height: 220px; object-fit: cover; border: 2px dashed var(--primary-blue); border-radius: 8px; }
+    .toast-container-custom { position: fixed; top: 68px; right: 12px; z-index: 9999; max-width: 94vw; pointer-events: none; }
+    .toast-container-custom .toast { pointer-events: auto; }
+    .loading-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px); z-index: 9998;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #qrPrintArea, #qrPrintArea * { visibility: visible; }
+      #qrPrintArea { position: absolute; left: 0; top: 0; width: 100%; background: #fff !important; color: #000 !important; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="globalLoader" class="loading-overlay d-none">
+    <div class="bg-white p-4 rounded-4 shadow-lg text-center">
+      <div class="spinner-border text-primary" style="width: 2.4rem; height: 2.4rem;" role="status"></div>
+      <div id="globalLoaderText" class="mt-2 fw-bold text-primary small">Memproses data...</div>
+    </div>
+  </div>
+
+  <div class="toast-container-custom" id="toastContainer"></div>
+
+  <header class="header-box py-2 mb-3 shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <img src="https://iili.io/npepunI.md.png" alt="Logo OSIS" class="header-logo">
+        <div>
+          <h5 class="mb-0 fw-bold fs-6" id="headerSchoolTitle">OSIS SMK DIAN AL MUSTARIH</h5>
+          <div class="d-flex align-items-center gap-2">
+            <span id="networkStatusBadge" class="badge bg-success" style="font-size: 0.65rem;"><i class="bi bi-wifi"></i> Online</span>
+            <span id="offlineQueueBadge" class="badge bg-warning text-dark d-none" style="font-size: 0.65rem; cursor: pointer;" onclick="syncOfflineQueue()">
+              <i class="bi bi-cloud-arrow-up-fill"></i> <span id="offlineQueueCount">0</span> Antrean
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="header-btn-icon" id="btnToggleSound" onclick="toggleSoundSetting()" title="Suara">
+          <i class="bi bi-volume-up-fill" id="iconSound"></i>
+        </button>
+        <button type="button" class="header-btn-icon" id="btnToggleTheme" onclick="toggleThemeMode()" title="Tema">
+          <i class="bi bi-moon-stars-fill" id="iconTheme"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container px-2 px-md-3">
+    <div class="d-none d-md-flex justify-content-center gap-2 mb-4">
+      <button class="btn btn-primary-custom fw-bold px-4 py-2 rounded-3 main-nav-btn" data-target="qr-scanner-pane" onclick="switchMainView('qr-scanner-pane')">
+        <i class="bi bi-qr-code-scan me-1"></i> Scan QR & Cek Seragam
+      </button>
+      <button class="btn btn-outline-primary fw-bold px-4 py-2 rounded-3 main-nav-btn" data-target="absen-pane" onclick="switchMainView('absen-pane')">
+        <i class="bi bi-ui-checks me-1"></i> Absensi Manual
+      </button>
+      <button class="btn btn-outline-primary fw-bold px-4 py-2 rounded-3 main-nav-btn" data-target="admin-pane" onclick="switchMainView('admin-pane')">
+        <i class="bi bi-speedometer2 me-1"></i> Panel Admin
+      </button>
+    </div>
+
+    <div id="mainViewsContainer">
+      <div id="petugasGateWrapper" class="row justify-content-center mb-4">
+        <div class="col-lg-6 col-md-8 px-2">
+          <div id="petugasLoginForm" class="card card-custom p-3 p-md-4 fade-in-up">
+            <div class="text-center mb-3">
+              <img src="https://iili.io/npepunI.md.png" alt="Logo OSIS" style="height: 52px; object-fit: contain;" class="mb-2">
+              <h5 class="fw-bold text-primary mb-1 fs-6 fs-md-5">Verifikasi Petugas OSIS</h5>
+              <p class="text-muted small mb-0">Masukkan kode verifikasi Anda untuk mulai bertugas.</p>
+            </div>
+            <div class="input-group input-group-md mt-2">
+              <span class="input-group-text"><i class="bi bi-key-fill text-primary"></i></span>
+              <input type="password" id="kodePetugasInput" class="form-control" placeholder="Kode Petugas" onkeypress="if(event.key==='Enter') loginPetugasOSIS()">
+              <button class="btn btn-primary-custom px-3 fw-bold" onclick="loginPetugasOSIS()">Masuk</button>
+            </div>
+          </div>
+
+          <div id="petugasBannerActive" class="card card-custom p-3 d-none text-white" style="background: linear-gradient(135deg, #0b4da2, #073573); border-left: 6px solid var(--accent-yellow);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 34px; height: 34px;">
+                  <i class="bi bi-person-badge"></i>
+                </div>
+                <div>
+                  <small class="text-white-50 d-block lh-1" style="font-size: 0.7rem;">Petugas Bertugas:</small>
+                  <span id="txtNamaPetugas" class="fw-bold text-warning small"></span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-primary fw-bold" style="font-size: 0.7rem;">Tercatat: <span id="petugasTodayCounter">0</span></span>
+                <button onclick="logoutPetugasOSIS()" class="btn btn-sm btn-outline-light py-0 px-2 fw-bold" style="font-size: 0.75rem;"><i class="bi bi-box-arrow-right"></i> Keluar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 1: SCAN QR -->
+      <div id="qr-scanner-pane" class="app-view d-none fade-in-up">
+        <div class="row g-3 justify-content-center">
+          <div class="col-lg-5" id="qrCaptureSection">
+            <div class="card card-custom p-3 text-center">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-primary mb-0 small"><i class="bi bi-qr-code-scan me-1"></i>Scan Kartu QR Siswa</h6>
+                <span class="badge bg-success" style="font-size: 0.68rem;">Siap</span>
+              </div>
+
+              <input type="file" id="qrImageFileInput" accept="image/*" capture="environment" class="d-none" onchange="handleQrImageUpload(event)">
+              <input type="file" id="qrGalleryFileInput" accept="image/*" class="d-none" onchange="handleQrImageUpload(event)">
+              <div id="qr-file-decoder-hidden" class="d-none"></div>
+
+              <div class="qr-upload-box mb-3" onclick="document.getElementById('qrImageFileInput').click()">
+                <i class="bi bi-camera-fill text-primary" style="font-size: 2.4rem;"></i>
+                <div class="fw-bold text-primary mt-1 small">Foto Kartu QR Siswa</div>
+                <p class="text-muted mb-0" style="font-size: 0.75rem;">Ketuk untuk memotret QR siswa</p>
+              </div>
+
+              <div class="row g-2 mb-2">
+                <div class="col-7 d-grid">
+                  <button type="button" class="btn btn-primary-custom btn-sm fw-bold py-2" onclick="document.getElementById('qrImageFileInput').click()">
+                    <i class="bi bi-camera-fill me-1"></i> Ambil Foto QR
+                  </button>
+                </div>
+                <div class="col-5 d-grid">
+                  <button type="button" class="btn btn-outline-primary btn-sm fw-bold py-2" onclick="document.getElementById('qrGalleryFileInput').click()">
+                    <i class="bi bi-images me-1"></i> Galeri
+                  </button>
+                </div>
+              </div>
+
+              <div id="qrImagePreviewWrapper" class="d-none mb-2 p-1 rounded border bg-light">
+                <img id="qrImagePreviewThumb" src="" style="max-height: 130px; object-fit: contain;" class="w-100 rounded" alt="QR">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="card card-custom p-3 p-md-4">
+              <div id="qrScanPromptState" class="text-center py-4 text-muted">
+                <i class="bi bi-shield-check display-6 text-primary opacity-50 mb-2"></i>
+                <h6 class="fw-bold mb-1">Form Pengecekan Kedisiplinan</h6>
+                <p class="small mb-0">Silakan foto kartu QR siswa terlebih dahulu. Data siswa serta form pengecekan seragam & HP akan otomatis terbuka di sini.</p>
+              </div>
+
+              <div id="qrScanFormState" class="d-none fade-in-up">
+                <div class="p-2.5 mb-3 rounded-3 bg-primary-subtle border border-primary-subtle d-flex align-items-center justify-content-between">
+                  <div>
+                    <small class="text-muted d-block lh-1" style="font-size: 0.7rem;">Siswa Terdeteksi:</small>
+                    <span id="scannedNamaSiswa" class="fw-bold text-primary">--</span>
+                    <span id="scannedKelasSiswa" class="badge bg-primary ms-1">--</span>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="cancelScannedSiswa()"><i class="bi bi-x-lg"></i> Batal</button>
+                </div>
+
+                <form id="formScanLengkap" onsubmit="handleScanAbsenFinal(event)">
+                  <h6 class="fw-bold text-primary border-bottom pb-1 mb-2 small"><span class="badge bg-warning text-dark me-1">1</span> Pemeriksaan Atribut Seragam</h6>
+                  <div class="row g-2 mb-3">
+                    <div class="col-6 col-md-4">
+                      <label class="form-label" style="font-size: 0.75rem; font-weight: 700;"><span data-uniform-label="badgeSekolah">Badge Sekolah</span></label>
+                      <select class="form-select form-select-sm" id="s_attrBadgeSekolah"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                    </div>
+                    <div class="col-6 col-md-4">
+                      <label class="form-label" style="font-size: 0.75rem; font-weight: 700;"><span data-uniform-label="badgeOsis">Badge OSIS</span></label>
+                      <select class="form-select form-select-sm" id="s_attrBadgeOsis"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                    </div>
+                    <div class="col-6 col-md-4">
+                      <label class="form-label" style="font-size: 0.75rem; font-weight: 700;"><span data-uniform-label="dasi">Dasi</span></label>
+                      <select class="form-select form-select-sm" id="s_attrDasi"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                    </div>
+                    <div class="col-6 col-md-4">
+                      <label class="form-label" style="font-size: 0.75rem; font-weight: 700;"><span data-uniform-label="ikatPinggang">Ikat Pinggang</span></label>
+                      <select class="form-select form-select-sm" id="s_attrSabuk"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                    </div>
+                    <div class="col-6 col-md-4">
+                      <label class="form-label" style="font-size: 0.75rem; font-weight: 700;"><span data-uniform-label="kaosKaki">Kaos Kaki</span></label>
+                      <select class="form-select form-select-sm" id="s_attrKaosKaki"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                    </div>
+                    <div class="col-6 col-md-4">
+                      <label class="form-label" style="font-size: 0.75rem; font-weight: 700;"><span data-uniform-label="sepatu">Sepatu</span></label>
+                      <select class="form-select form-select-sm" id="s_attrSepatu"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <label class="form-label" style="font-size: 0.75rem; font-weight: 700;"><span data-uniform-label="atributLainnya">Atribut Lain</span></label>
+                      <select class="form-select form-select-sm" id="s_attrLainnya"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                    </div>
+                    <div id="scanCustomUniformFields" class="row g-2 col-12"></div>
+                    <div class="col-12 col-md-8">
+                      <label class="form-label" style="font-size: 0.75rem; font-weight: 700;"><span data-uniform-label="catatan">Catatan Seragam</span></label>
+                      <input type="text" id="s_txtKeterangan" class="form-control form-control-sm" placeholder="Catatan jika ada yang kurang (opsional)">
+                    </div>
+                  </div>
+
+                  <h6 class="fw-bold text-primary border-bottom pb-1 mb-2 small"><span class="badge bg-warning text-dark me-1">2</span> Pengumpulan HP Siswa</h6>
+                  <div class="p-2.5 bg-light rounded-3 border mb-3">
+                    <div class="mb-2">
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="s_statusHp" id="s_hpDikumpulkan" value="HP Dikumpulkan" checked>
+                        <label class="form-check-label fw-bold text-success small" for="s_hpDikumpulkan">HP Dikumpulkan</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="s_statusHp" id="s_hpTidakDikumpulkan" value="HP Tidak Dikumpulkan">
+                        <label class="form-check-label fw-bold text-danger small" for="s_hpTidakDikumpulkan">HP Tidak Dikumpulkan</label>
+                      </div>
+                    </div>
+                    <input type="text" id="s_txtKeteranganHp" class="form-control form-control-sm" placeholder="Keterangan HP (opsional)">
+                  </div>
+
+                  <div class="d-grid">
+                    <button type="submit" id="btnKonfirmasiScan" class="btn btn-primary-custom fw-bold py-2 shadow-sm">
+                      <i class="bi bi-send-check-fill me-1"></i> SIMPAN ABSENSI SISWA
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="card card-custom p-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-primary mb-0 small"><i class="bi bi-clock-history me-1"></i>Riwayat Absensi Hari Ini</h6>
+                <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="refreshAttendanceSilently()"><i class="bi bi-arrow-clockwise"></i></button>
+              </div>
+              <div class="table-responsive" style="max-height: 240px;">
+                <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                  <thead class="table-primary sticky-top">
+                    <tr><th>Waktu</th><th>Nama Siswa</th><th>Kelas</th><th>Metode</th><th>Status</th></tr>
+                  </thead>
+                  <tbody id="qrScanHistoryBody">
+                    <tr><td colspan="5" class="text-center text-muted py-2">Belum ada siswa tercatat hari ini.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: ABSENSI MANUAL -->
+      <div id="absen-pane" class="app-view d-none fade-in-up">
+        <div class="row justify-content-center">
+          <div class="col-lg-8 px-2">
+            <div class="card card-custom p-3 p-md-4">
+              <form id="formAbsensi" onsubmit="handleAbsenSubmit(event)">
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label fw-bold text-primary mb-0 small"><span class="badge bg-warning text-dark me-1">1</span> Pilih Kelas</label>
+                    <small class="text-muted small" id="infoKelasTerpilih">Belum dipilih</small>
+                  </div>
+                  <div id="kelasButtonGroup" class="kelas-btn-grid mb-2"></div>
+                  <input type="hidden" id="selectedKelasValue" required>
+                </div>
+
+                <div id="wrapperPilihSiswa" class="d-none mb-3 p-2.5 rounded-3 border bg-light fade-in-up">
+                  <label class="form-label fw-bold text-primary mb-2 small"><span class="badge bg-warning text-dark me-1">2</span> Pilih Nama Siswa (<span id="labelKelasAktif"></span>)</label>
+                  <div id="alertSiswaKosong" class="alert alert-warning d-none mb-0 py-2 small">Data siswa kosong.</div>
+                  <div id="boxInputSiswa">
+                    <div class="row g-2">
+                      <div class="col-md-5">
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text"><i class="bi bi-search text-primary"></i></span>
+                          <input type="text" id="searchSiswaInput" class="form-control" placeholder="Cari nama..." onkeyup="filterDropdownSiswaBySearch()">
+                        </div>
+                      </div>
+                      <div class="col-md-7">
+                        <select id="selectSiswa" class="form-select form-select-sm fw-semibold" required onchange="onSiswaSelected()">
+                          <option value="">-- Pilih Siswa --</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="mt-2 d-flex justify-content-between align-items-center">
+                      <small class="text-muted" id="jumlahSiswaKelasInfo" style="font-size: 0.75rem;"></small>
+                      <span id="statusSiswaSelectedBadge" class="badge bg-primary" style="font-size: 0.7rem;">Kelas: -</span>
+                    </div>
+                  </div>
+                </div>
+
+                <h6 class="fw-bold text-primary border-bottom pb-1 mb-2 small"><span class="badge bg-warning text-dark me-1">3</span> Kelengkapan Seragam</h6>
+                <div class="row g-2 mb-3">
+                  <div class="col-6 col-md-4">
+                    <label class="form-label small fw-bold"><span data-uniform-label="badgeSekolah">Badge Sekolah</span></label>
+                    <select class="form-select form-select-sm" id="attrBadgeSekolah"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                  </div>
+                  <div class="col-6 col-md-4">
+                    <label class="form-label small fw-bold"><span data-uniform-label="badgeOsis">Badge OSIS</span></label>
+                    <select class="form-select form-select-sm" id="attrBadgeOsis"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                  </div>
+                  <div class="col-6 col-md-4">
+                    <label class="form-label small fw-bold"><span data-uniform-label="dasi">Dasi</span></label>
+                    <select class="form-select form-select-sm" id="attrDasi"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                  </div>
+                  <div class="col-6 col-md-4">
+                    <label class="form-label small fw-bold"><span data-uniform-label="ikatPinggang">Ikat Pinggang</span></label>
+                    <select class="form-select form-select-sm" id="attrSabuk"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                  </div>
+                  <div class="col-6 col-md-4">
+                    <label class="form-label small fw-bold"><span data-uniform-label="kaosKaki">Kaos Kaki</span></label>
+                    <select class="form-select form-select-sm" id="attrKaosKaki"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                  </div>
+                  <div class="col-6 col-md-4">
+                    <label class="form-label small fw-bold"><span data-uniform-label="sepatu">Sepatu</span></label>
+                    <select class="form-select form-select-sm" id="attrSepatu"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label small fw-bold"><span data-uniform-label="atributLainnya">Atribut Lain</span></label>
+                    <select class="form-select form-select-sm" id="attrLainnya"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+                  </div>
+                  <div id="manualCustomUniformFields" class="row g-2 col-12"></div>
+                  <div class="col-12 col-md-8">
+                    <label class="form-label small fw-bold"><span data-uniform-label="catatan">Catatan Seragam</span></label>
+                    <input type="text" id="txtKeterangan" class="form-control form-control-sm" placeholder="Catatan (opsional)">
+                  </div>
+                </div>
+
+                <h6 class="fw-bold text-primary border-bottom pb-1 mb-2 small"><span class="badge bg-warning text-dark me-1">4</span> Pengumpulan HP</h6>
+                <div class="row g-2 mb-3 p-2.5 bg-light rounded-3 border">
+                  <div class="col-12">
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="statusHp" id="hpDikumpulkan" value="HP Dikumpulkan" checked>
+                      <label class="form-check-label fw-bold text-success small" for="hpDikumpulkan">HP Dikumpulkan</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="statusHp" id="hpTidakDikumpulkan" value="HP Tidak Dikumpulkan">
+                      <label class="form-check-label fw-bold text-danger small" for="hpTidakDikumpulkan">HP Tidak Dikumpulkan</label>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <input type="text" id="txtKeteranganHp" class="form-control form-control-sm" placeholder="Keterangan HP (opsional)">
+                  </div>
+                </div>
+
+                <h6 class="fw-bold text-primary border-bottom pb-1 mb-2 small"><span class="badge bg-warning text-dark me-1">5</span> Foto Bukti <span class="text-muted fw-normal small">(Opsional)</span></h6>
+                <div class="text-center p-2.5 bg-light rounded-3 border mb-3">
+                  <input type="file" id="fotoInput" accept="image/jpeg,image/jpg,image/png" capture="environment" class="d-none" onchange="previewFoto(event)">
+                  <div id="uploadPlaceholder">
+                    <button type="button" class="btn btn-outline-primary btn-sm fw-bold px-3 py-1.5" onclick="document.getElementById('fotoInput').click()">
+                      <i class="bi bi-camera-fill me-1"></i> Ambil / Pilih Foto
+                    </button>
+                  </div>
+                  <div id="previewArea" class="d-none">
+                    <img id="imgPreview" src="" class="preview-box img-fluid mb-2" alt="Preview">
+                    <div>
+                      <button type="button" class="btn btn-sm btn-accent-yellow py-0 px-2" onclick="document.getElementById('fotoInput').click()">Ganti</button>
+                      <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 ms-1" onclick="hapusFotoPreview()">Hapus</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-grid">
+                  <button type="submit" id="btnKirim" class="btn btn-primary-custom fw-bold py-2 shadow-sm">
+                    <i class="bi bi-send-check-fill me-1"></i> SIMPAN ABSENSI MANUAL
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: PANEL ADMIN -->
+      <div id="admin-pane" class="app-view d-none fade-in-up">
+        <div id="adminLoginForm" class="row justify-content-center">
+          <div class="col-md-5 px-2">
+            <div class="card card-custom p-4">
+              <div class="text-center mb-3">
+                <img src="https://iili.io/npepunI.md.png" alt="Logo OSIS" style="height: 50px; object-fit: contain;" class="mb-2">
+                <h5 class="fw-bold text-primary mb-0 fs-6">Login Panel Admin</h5>
+                <small class="text-muted" style="font-size: 0.75rem;">Anggota OSIS • Pengawas • Developer</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold small">Username</label>
+                <input type="text" id="adminUser" class="form-control form-control-sm" placeholder="Username">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold small">Password</label>
+                <input type="password" id="adminPass" class="form-control form-control-sm" placeholder="Password" onkeypress="if(event.key==='Enter') loginAdminProcess()">
+              </div>
+              <button onclick="loginAdminProcess()" class="btn btn-primary-custom w-100 fw-bold py-2 btn-sm">
+                <i class="bi bi-shield-lock-fill me-1"></i> Masuk Panel Admin
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="adminDashboard" class="d-none">
+          <div id="rolePermissionBanner" class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2 shadow-sm border-0" style="font-size: 0.8rem;">
+            <div>
+              <i class="bi bi-shield-check me-1"></i>
+              <strong>User: <span id="bannerAdminName">-</span></strong> | 
+              Role: <span id="bannerAdminRole" class="badge bg-primary">-</span> — 
+              <span id="bannerRoleDesc">Memuat hak akses...</span>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-lg-3">
+              <div class="admin-sidebar sticky-top" style="top: 64px;">
+                <div class="d-flex justify-content-between align-items-center pb-2 mb-2 border-bottom">
+                  <div>
+                    <div class="fw-bold text-primary small lh-1" id="adminSidebarUsername">Admin OSIS</div>
+                    <span class="badge bg-primary mt-1" id="adminRoleLabel" style="font-size: 0.65rem;">Role</span>
+                  </div>
+                  <span class="badge bg-success-subtle text-success border border-success" style="font-size: 0.65rem;"><i class="bi bi-broadcast"></i> Live</span>
+                </div>
+                <div class="nav flex-column nav-pills" id="adminSidebarTab" role="tablist">
+                  <button class="nav-link active py-2 small text-start" id="tab-btn-rekap" data-bs-toggle="pill" data-bs-target="#pane-rekap" type="button"><i class="bi bi-journal-check me-2"></i> Rekap & Kehadiran</button>
+                  <button class="nav-link py-2 small text-start" id="tab-btn-poin" data-bs-toggle="pill" data-bs-target="#pane-poin" type="button" onclick="loadViolationPoints()"><i class="bi bi-exclamation-triangle me-2"></i> Poin Pelanggaran</button>
+                  <button class="nav-link py-2 small text-start d-none" id="tab-btn-broadcast" data-bs-toggle="pill" data-bs-target="#pane-broadcast" type="button" onclick="initBroadcastTab()"><i class="bi bi-whatsapp me-2"></i> Broadcast WA Ortu</button>
+                  <button class="nav-link py-2 small text-start d-none" id="tab-btn-uniform-labels" data-bs-toggle="pill" data-bs-target="#pane-uniform-labels" type="button" onclick="loadUniformLabelsAdmin()"><i class="bi bi-tags me-2"></i> Nama Atribut Seragam</button>
+                  <button class="nav-link py-2 small text-start d-none" id="tab-btn-absensi-control" data-bs-toggle="pill" data-bs-target="#pane-absensi-control" type="button" onclick="loadAttendanceControl()"><i class="bi bi-toggle-on me-2"></i> Pengaturan Absensi</button>
+                  <button class="nav-link py-2 small text-start d-none" id="tab-btn-siswa" data-bs-toggle="pill" data-bs-target="#pane-siswa" type="button"><i class="bi bi-qr-code me-2"></i> Data Siswa & QR</button>
+                  <button class="nav-link py-2 small text-start d-none" id="tab-btn-kelas" data-bs-toggle="pill" data-bs-target="#pane-kelas" type="button"><i class="bi bi-building-fill me-2"></i> Data Kelas</button>
+                  <button class="nav-link py-2 small text-start d-none" id="tab-btn-petugas" data-bs-toggle="pill" data-bs-target="#pane-petugas" type="button"><i class="bi bi-activity me-2"></i> Riwayat Petugas</button>
+                  <button class="nav-link py-2 small text-start d-none" id="tab-btn-users" data-bs-toggle="pill" data-bs-target="#pane-users" type="button" onclick="loadAdminAccounts()"><i class="bi bi-shield-lock me-2"></i> Kelola Role Admin</button>
+                  <button class="btn btn-outline-primary btn-sm text-start mt-2 d-none" id="btnTambahAkunPengawas" type="button" onclick="openModalTambahAkunPengawas()"><i class="bi bi-person-plus me-2"></i> Tambah Akun</button>
+                </div>
+                <hr class="my-2">
+                <div class="d-grid gap-2">
+                  <button onclick="loadDashboardData(false)" class="btn btn-outline-primary btn-sm fw-bold py-1" style="font-size: 0.75rem;"><i class="bi bi-arrow-clockwise me-1"></i> Sinkron</button>
+                  <button onclick="logoutAdmin()" class="btn btn-outline-danger btn-sm fw-bold py-1" style="font-size: 0.75rem;"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-9">
+              <div class="card card-custom dashboard-progress-card mb-3">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3 position-relative" style="z-index:1;">
+                  <div class="dashboard-progress-title"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Progress Kehadiran Hari Ini</div>
+                  <span class="dashboard-progress-meta" id="progressPercentText">0% (0 / 0)</span>
+                </div>
+                <div class="progress dashboard-progress-track position-relative" style="z-index:1;">
+                  <div id="attendanceProgressBar" class="progress-bar bg-success" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width:0%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2 position-relative" style="z-index:1;"><small class="text-muted" style="font-size:.68rem;">Siswa sudah melakukan absensi</small><small class="text-muted" style="font-size:.68rem;">Target 100%</small></div>
+              </div>
+
+              <div class="row g-2 g-md-3 mb-3">
+                <div class="col-6 col-md-3"><div class="stat-card dashboard-stat-card dashboard-stat-blue"><div class="dashboard-stat-icon"><i class="bi bi-people-fill"></i></div><div class="dashboard-stat-copy"><small class="text-muted fw-bold d-block">Total Siswa</small><h5 id="statTotal" class="fw-bold text-primary mb-0 mt-1">0</h5></div></div></div>
+                <div class="col-6 col-md-3"><div class="stat-card dashboard-stat-card dashboard-stat-green"><div class="dashboard-stat-icon"><i class="bi bi-person-check-fill"></i></div><div class="dashboard-stat-copy"><small class="text-muted fw-bold d-block">Hadir</small><h5 id="statSudah" class="fw-bold text-success mb-0 mt-1">0</h5></div></div></div>
+                <div class="col-6 col-md-3"><div class="stat-card dashboard-stat-card dashboard-stat-red"><div class="dashboard-stat-icon"><i class="bi bi-person-x-fill"></i></div><div class="dashboard-stat-copy"><small class="text-muted fw-bold d-block">Belum Absen</small><h5 id="statBelum" class="fw-bold text-danger mb-0 mt-1">0</h5></div></div></div>
+                <div class="col-6 col-md-3"><div class="stat-card dashboard-stat-card dashboard-stat-yellow"><div class="dashboard-stat-icon"><i class="bi bi-person-exclamation"></i></div><div class="dashboard-stat-copy"><small class="text-muted fw-bold d-block">Seragam Kurang</small><h5 id="statTdkLengkap" class="fw-bold text-warning mb-0 mt-1">0</h5></div></div></div>
+              </div>
+
+              <div class="card card-custom dashboard-section-card mb-3">
+                <h6 class="dashboard-section-heading"><span class="heading-icon"><i class="bi bi-bar-chart-line-fill"></i></span>Monitoring Kehadiran per Kelas</h6>
+                <div id="kelasStatsContainer" class="row g-2"></div>
+              </div>
+
+              <div class="tab-content">
+                <!-- TAB 1: REKAP -->
+                <div class="tab-pane fade show active" id="pane-rekap">
+                  <div class="card card-custom p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                      <h6 class="fw-bold text-primary mb-0 small"><i class="bi bi-table me-1"></i>Daftar Siswa Sudah Absen & Pilihan Atribut</h6>
+                      <div class="d-flex gap-1 flex-wrap">
+                        <button onclick="exportToPDF()" class="btn btn-sm btn-danger fw-bold py-1 px-2" style="font-size: 0.75rem;"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+                        <button onclick="exportToExcel()" class="btn btn-sm btn-accent-yellow py-1 px-2" style="font-size: 0.75rem;"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+                        <button onclick="exportToCSV()" class="btn btn-sm btn-success fw-bold py-1 px-2" style="font-size: 0.75rem;"><i class="bi bi-filetype-csv"></i> CSV</button>
+                      </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                      <div class="col-md-3"><input type="text" id="filterNama" class="form-control form-control-sm" placeholder="Cari nama..." onkeyup="applyFilter()"></div>
+                      <div class="col-md-3"><select id="filterKelas" class="form-select form-select-sm" onchange="applyFilter()"><option value="">-- Semua Kelas --</option></select></div>
+                      <div class="col-md-2"><input type="date" id="filterTanggal" class="form-control form-control-sm" onchange="applyFilter()"></div>
+                      <div class="col-md-2">
+                        <select id="filterSeragam" class="form-select form-select-sm" onchange="applyFilter()">
+                          <option value="">-- Seragam --</option><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <select id="filterStatusHp" class="form-select form-select-sm" onchange="applyFilter()">
+                          <option value="">-- HP --</option><option value="HP Dikumpulkan">Dikumpulkan</option><option value="HP Tidak Dikumpulkan">Tidak</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-hover align-middle border table-sm text-nowrap" style="font-size: 0.8rem;">
+                        <thead class="table-primary">
+                          <tr><th>No</th><th>Foto</th><th>Nama Siswa</th><th>Kelas</th><th>Metode</th><th>Petugas</th><th>Tanggal</th><th>Jam</th><th>Seragam</th><th>HP</th><th>Ket</th><th>Ubah Pilihan</th></tr>
+                        </thead>
+                        <tbody id="tabelRekapBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TAB POIN -->
+                <div class="tab-pane fade" id="pane-poin">
+                  <div class="card card-custom p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                      <div><h6 class="fw-bold text-primary mb-1 small"><i class="bi bi-exclamation-triangle-fill me-1"></i>Sistem Poin Pelanggaran</h6><small class="text-muted">Setiap atribut seragam yang tidak lengkap dihitung 1 poin.</small></div>
+                      <button class="btn btn-outline-primary btn-sm" onclick="loadViolationPoints()"><i class="bi bi-arrow-clockwise me-1"></i>Perbarui</button>
+                    </div>
+                    <div class="row g-2 mb-3">
+                      <div class="col-4"><div class="stat-card"><small class="text-muted d-block" style="font-size:.68rem">Total Poin</small><h5 id="poinTotal" class="fw-bold text-danger mb-0">0</h5></div></div>
+                      <div class="col-4"><div class="stat-card"><small class="text-muted d-block" style="font-size:.68rem">Siswa Tercatat</small><h5 id="poinSiswa" class="fw-bold text-primary mb-0">0</h5></div></div>
+                      <div class="col-4"><div class="stat-card"><small class="text-muted d-block" style="font-size:.68rem">Jenis Pelanggaran</small><h5 id="poinJumlah" class="fw-bold text-warning mb-0">0</h5></div></div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                      <div class="col-md-6"><input id="filterPoinNama" class="form-control form-control-sm" placeholder="Cari nama atau ID siswa..." oninput="filterViolationPoints()"></div>
+                      <div class="col-md-6"><select id="filterPoinKelas" class="form-select form-select-sm" onchange="filterViolationPoints()"><option value="">Semua kelas</option></select></div>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover table-sm align-middle border" style="font-size:.8rem">
+                      <thead class="table-primary"><tr><th>Nama Siswa</th><th>Kelas</th><th>Total Poin</th><th>Jumlah Pelanggaran</th><th>Riwayat</th></tr></thead>
+                      <tbody id="tabelPoinBody"><tr><td colspan="5" class="text-center text-muted">Memuat data...</td></tr></tbody>
+                    </table></div>
+                  </div>
+                  <div class="card card-custom p-3" id="detailRiwayatPoin" style="display:none">
+                    <h6 class="fw-bold text-primary small mb-2" id="judulRiwayatPoin">Riwayat Pelanggaran</h6>
+                    <div class="table-responsive"><table class="table table-sm table-bordered" style="font-size:.78rem"><thead><tr><th>Tanggal</th><th>Jam</th><th>Detail</th><th>Poin</th></tr></thead><tbody id="riwayatPoinBody"></tbody></table></div>
+                  </div>
+                </div>
+
+                <!-- TAB BROADCAST WA ORTU -->
+                <div class="tab-pane fade" id="pane-broadcast">
+                  <div class="card card-custom p-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                          <i class="bi bi-whatsapp fs-5"></i>
+                        </div>
+                        <div>
+                          <h6 class="fw-bold text-primary mb-0">Broadcast / Kirim Pesan Manual WhatsApp</h6>
+                          <small class="text-muted">Kirim pengumuman atau pemberitahuan ke nomor WhatsApp Orang Tua/Wali siswa.</small>
+                        </div>
+                      </div>
+                      <span class="badge bg-success-subtle text-success border border-success" id="broadcastTargetCountBadge">0 Penerima Siap</span>
+                    </div>
+
+                    <form id="formBroadcastWa" onsubmit="handleKirimBroadcastWa(event)">
+                      <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                          <label class="form-label fw-bold small">Target Penerima</label>
+                          <select id="broadcastTargetMode" class="form-select form-select-sm" onchange="onBroadcastTargetModeChange()">
+                            <option value="ALL">Semua Siswa Aktif (Yang Punya No. WA)</option>
+                            <option value="KELAS">Berdasarkan Kelas Tertentu</option>
+                            <option value="BELUM_ABSEN">Siswa Belum Absen Hari Ini</option>
+                            <option value="SERAGAM_KURANG">Siswa Seragam Tidak Lengkap Hari Ini</option>
+                            <option value="MANUAL_SELECT">Pilih Siswa Secara Manual</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6" id="broadcastKelasWrapper" style="display:none;">
+                          <label class="form-label fw-bold small">Filter Kelas</label>
+                          <select id="broadcastTargetKelas" class="form-select form-select-sm" onchange="updateBroadcastPreviewCount()">
+                            <option value="">-- Semua Kelas --</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div id="broadcastManualSelectBox" class="border rounded-3 p-2.5 bg-light mb-3" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                          <input type="text" id="broadcastSearchSiswa" class="form-control form-control-sm" placeholder="Cari nama atau kelas siswa..." oninput="renderBroadcastManualCheckboxes()">
+                          <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" onclick="toggleSelectAllBroadcast(true)">Pilih Semua</button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" onclick="toggleSelectAllBroadcast(false)">Reset</button>
+                        </div>
+                        <div id="broadcastSiswaCheckboxList" class="row g-1" style="max-height: 190px; overflow-y: auto;"></div>
+                      </div>
+
+                      <div class="mb-2">
+                        <label class="form-label fw-bold small d-block mb-1">Template Pesan Cepat:</label>
+                        <div class="d-flex flex-wrap gap-1">
+                          <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.73rem;" onclick="applyBroadcastTemplate('pengumuman')">📢 Pengumuman Sekolah</button>
+                          <button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-2" style="font-size:0.73rem;" onclick="applyBroadcastTemplate('belum_absen')">⏰ Info Belum Hadir</button>
+                          <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:0.73rem;" onclick="applyBroadcastTemplate('seragam')">👔 Pemberitahuan Seragam</button>
+                        </div>
+                      </div>
+
+                      <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <label class="form-label fw-bold small mb-1">Isi Pesan WhatsApp</label>
+                          <small class="text-muted" style="font-size:0.72rem;">Gunakan <code>{nama}</code> & <code>{kelas}</code> untuk otomatis menyebut data siswa</small>
+                        </div>
+                        <textarea id="broadcastPesanText" class="form-control form-control-sm" rows="6" required placeholder="Tulis pesan untuk orang tua/wali siswa di sini..." oninput="updateBroadcastMessagePreview()"></textarea>
+                      </div>
+
+                      <div class="p-2.5 rounded-3 border bg-light mb-3">
+                        <small class="fw-bold text-muted d-block mb-1" style="font-size:0.72rem;"><i class="bi bi-eye me-1"></i>Pratinjau Pesan:</small>
+                        <div id="broadcastLivePreview" class="small text-dark" style="white-space: pre-wrap; font-family: inherit;">-</div>
+                      </div>
+
+                      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <small class="text-muted"><i class="bi bi-shield-check text-success me-1"></i>Kirim via Fonnte API.</small>
+                        <button type="submit" id="btnKirimBroadcast" class="btn btn-success btn-sm fw-bold px-3 py-2">
+                          <i class="bi bi-send-fill me-1"></i> Kirim Broadcast WhatsApp
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- TAB ATRIBUT SERAGAM -->
+                <div class="tab-pane fade" id="pane-uniform-labels">
+                  <div class="card card-custom p-3">
+                    <h6 class="fw-bold text-primary mb-1"><i class="bi bi-tags me-1"></i> Pengaturan Nama Atribut Seragam</h6>
+                    <p class="small text-muted mb-3">Ubah nama pemeriksaan agar sesuai dengan ketentuan seragam sekolah.</p>
+                    <div class="row g-3" id="uniformLabelInputs">
+                      <div class="col-md-6"><label class="form-label small fw-bold"><span data-uniform-label="badgeSekolah">Badge Sekolah</span></label><input class="form-control form-control-sm" id="uniformLabel_badgeSekolah" maxlength="60"></div>
+                      <div class="col-md-6"><label class="form-label small fw-bold"><span data-uniform-label="badgeOsis">Badge OSIS</span></label><input class="form-control form-control-sm" id="uniformLabel_badgeOsis" maxlength="60"></div>
+                      <div class="col-md-6"><label class="form-label small fw-bold"><span data-uniform-label="dasi">Dasi</span></label><input class="form-control form-control-sm" id="uniformLabel_dasi" maxlength="60"></div>
+                      <div class="col-md-6"><label class="form-label small fw-bold"><span data-uniform-label="ikatPinggang">Ikat Pinggang</span></label><input class="form-control form-control-sm" id="uniformLabel_ikatPinggang" maxlength="60"></div>
+                      <div class="col-md-6"><label class="form-label small fw-bold"><span data-uniform-label="kaosKaki">Kaos Kaki</span></label><input class="form-control form-control-sm" id="uniformLabel_kaosKaki" maxlength="60"></div>
+                      <div class="col-md-6"><label class="form-label small fw-bold"><span data-uniform-label="sepatu">Sepatu</span></label><input class="form-control form-control-sm" id="uniformLabel_sepatu" maxlength="60"></div>
+                      <div class="col-md-6"><label class="form-label small fw-bold"><span data-uniform-label="atributLainnya">Atribut Lain</span></label><input class="form-control form-control-sm" id="uniformLabel_atributLainnya" maxlength="60"></div>
+                      <div class="col-md-6"><label class="form-label small fw-bold">Catatan</label><input class="form-control form-control-sm" id="uniformLabel_catatan" maxlength="60"></div>
+                    </div>
+                    <div class="d-flex gap-2 mt-3 flex-wrap"><button class="btn btn-primary btn-sm fw-bold" onclick="saveUniformLabelsAdmin()"><i class="bi bi-save me-1"></i> Simpan Nama Atribut</button></div>
+                  </div>
+                </div>
+
+                <!-- TAB PENGATURAN ABSENSI -->
+                <div class="tab-pane fade" id="pane-absensi-control">
+                  <div class="card card-custom p-3">
+                    <h6 class="fw-bold text-primary mb-1">Pengaturan Pengisian Absensi</h6>
+                    <p class="small text-muted mb-3">Buka atau tutup akses absensi petugas OSIS.</p>
+                    <div class="border rounded-3 p-3 mb-3">
+                      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                          <div class="fw-bold mb-1">Status Pengisian Absensi</div>
+                          <span id="attendanceStatusBadge" class="badge bg-success">MEMUAT STATUS...</span>
+                        </div>
+                        <div class="form-check form-switch fs-3">
+                          <input class="form-check-input" type="checkbox" role="switch" id="attendanceEnabledSwitch" onchange="handleAttendanceToggle(this.checked)" disabled>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TAB SISWA -->
+                <div class="tab-pane fade" id="pane-siswa">
+                  <div class="card card-custom p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                      <h6 class="fw-bold text-primary mb-0 small"><i class="bi bi-people-fill me-1"></i>Data Siswa & QR</h6>
+                      <div class="d-flex gap-1">
+                        <button onclick="openPrintAllQrModal()" class="btn btn-accent-yellow btn-sm py-1 px-2" style="font-size: 0.75rem;"><i class="bi bi-printer"></i> Cetak QR</button>
+                        <button id="btnTambahSiswa" onclick="openModalSiswa()" class="btn btn-primary-custom btn-sm fw-bold py-1 px-2 d-none" style="font-size: 0.75rem;"><i class="bi bi-person-plus"></i> Tambah Siswa</button>
+                      </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                      <div class="col-md-5"><input type="text" id="filterSiswaNama" class="form-control form-control-sm" placeholder="Cari nama/ID..." onkeyup="applySiswaFilter()"></div>
+                      <div class="col-md-4"><select id="filterSiswaKelas" class="form-select form-select-sm" onchange="applySiswaFilter()"><option value="">-- Semua Kelas --</option></select></div>
+                      <div class="col-md-3">
+                        <select id="filterSiswaStatusHadir" class="form-select form-select-sm" onchange="applySiswaFilter()">
+                          <option value="">-- Status --</option><option value="SUDAH">Hadir</option><option value="BELUM">Belum</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-hover align-middle border table-sm" style="font-size: 0.8rem;">
+                        <thead class="table-primary">
+                          <tr><th>ID</th><th>Nama</th><th>Kelas</th><th>Hari Ini</th><th>QR</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody id="tabelSiswaBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TAB KELAS -->
+                <div class="tab-pane fade" id="pane-kelas">
+                  <div class="card card-custom p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h6 class="fw-bold text-primary mb-0 small"><i class="bi bi-building-fill me-1"></i>Manajemen Kelas</h6>
+                      <button id="btnTambahKelas" onclick="openModalKelas()" class="btn btn-primary-custom btn-sm fw-bold py-1 px-2 d-none" style="font-size: 0.75rem;"><i class="bi bi-plus-circle"></i> Tambah</button>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-hover align-middle border table-sm" style="font-size: 0.8rem;">
+                        <thead class="table-primary">
+                          <tr><th>ID</th><th>Tingkat</th><th>Jurusan</th><th>Nama Kelas</th><th>Status</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody id="tabelKelasBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TAB PETUGAS -->
+                <div class="tab-pane fade" id="pane-petugas">
+                  <div class="card card-custom p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h6 class="fw-bold text-primary mb-0 small"><i class="bi bi-person-badge-fill me-1"></i>Petugas OSIS</h6>
+                      <button id="btnTambahPetugas" onclick="openModalPetugas()" class="btn btn-primary-custom btn-sm fw-bold py-1 px-2 d-none" style="font-size: 0.75rem;"><i class="bi bi-person-plus"></i> Tambah</button>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-hover align-middle border table-sm" style="font-size: 0.8rem;">
+                        <thead class="table-primary">
+                          <tr><th>ID</th><th>Nama</th><th>Kode</th><th>Hari Ini</th><th>Total</th><th>Status</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody id="tabelPetugasBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TAB USERS ADMIN -->
+                <div class="tab-pane fade" id="pane-users">
+                  <div class="card card-custom p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h6 class="fw-bold text-primary mb-0 small"><i class="bi bi-shield-lock-fill me-1"></i>Manajemen Akun & Role Admin</h6>
+                      <button onclick="openModalAdminUser()" class="btn btn-primary-custom btn-sm fw-bold py-1 px-2" style="font-size: 0.75rem;"><i class="bi bi-person-plus-fill"></i> Tambah Admin</button>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-hover align-middle border table-sm" style="font-size: 0.8rem;">
+                        <thead class="table-primary">
+                          <tr><th>ID</th><th>Username</th><th>Role / Hak Akses</th><th>Status</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody id="tabelAdminUsersBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="mobile-bottom-nav d-md-none">
+    <button class="mobile-nav-item active" data-target="qr-scanner-pane" onclick="switchMainView('qr-scanner-pane')"><i class="bi bi-qr-code-scan"></i><span>Scan QR</span></button>
+    <button class="mobile-nav-item" data-target="absen-pane" onclick="switchMainView('absen-pane')"><i class="bi bi-ui-checks"></i><span>Manual</span></button>
+    <button class="mobile-nav-item" data-target="admin-pane" onclick="switchMainView('admin-pane')"><i class="bi bi-speedometer2"></i><span>Admin</span></button>
+  </nav>
+
+  <!-- MODALS -->
+  <div class="modal fade" id="modalQrViewer" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white no-print py-2">
+          <h5 class="modal-title fw-bold fs-6" id="modalQrTitle">Kartu QR Code</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="qrPrintArea">
+          <div class="text-center mb-3">
+            <h5 class="fw-bold mb-0 fs-6" id="printSchoolHeader">KARTU ABSENSI QR</h5>
+            <small class="text-muted" id="printClassSubheader"></small>
+          </div>
+          <div id="qrCardsGrid" class="row g-2 justify-content-center"></div>
+        </div>
+        <div class="modal-footer no-print py-2">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+          <button type="button" class="btn btn-primary-custom btn-sm fw-bold" onclick="window.print()"><i class="bi bi-printer me-1"></i> Cetak</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalFoto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2">
+          <h5 class="modal-title fw-bold fs-6" id="modalFotoTitle">Foto Bukti</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center p-3">
+          <img id="imgFullSize" src="" class="img-fluid rounded shadow" style="max-height: 400px;" alt="Foto">
+          <div class="mt-2"><a id="btnOpenDrive" href="#" target="_blank" class="btn btn-sm btn-primary-custom"><i class="bi bi-box-arrow-up-right me-1"></i> Buka Drive</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalSiswa" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2"><h5 class="modal-title fw-bold fs-6" id="modalSiswaTitle">Siswa</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <form id="formSiswa" onsubmit="handleSiswaSubmit(event)">
+            <input type="hidden" id="siswaId">
+            <div class="mb-2"><label class="form-label fw-bold small">Nama Siswa</label><input type="text" id="siswaNama" class="form-control form-control-sm" required></div>
+            <div class="mb-2"><label class="form-label fw-bold small">Kelas</label><select id="siswaKelas" class="form-select form-select-sm" required></select></div>
+            <div class="mb-2"><label class="form-label fw-bold small">WhatsApp Orang Tua/Wali</label><input type="tel" id="siswaWaOrtu" class="form-control form-control-sm" inputmode="numeric" maxlength="18" placeholder="Contoh: 081234567890"></div>
+            <div class="mb-3"><label class="form-label fw-bold small">Status</label><select id="siswaStatus" class="form-select form-select-sm"><option value="Aktif">Aktif</option><option value="Tidak Aktif">Tidak Aktif</option></select></div>
+            <button type="submit" class="btn btn-primary-custom btn-sm w-100 fw-bold">Simpan</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalKelas" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2"><h5 class="modal-title fw-bold fs-6" id="modalKelasTitle">Kelas</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <form id="formKelas" onsubmit="handleKelasSubmit(event)">
+            <input type="hidden" id="kelasId">
+            <div class="row g-2 mb-2">
+              <div class="col-6"><label class="form-label fw-bold small">Tingkat</label><select id="kelasTingkat" class="form-select form-select-sm" required onchange="updatePreviewNamaKelas()"><option value="X">X</option><option value="XI">XI</option><option value="XII">XII</option></select></div>
+              <div class="col-6"><label class="form-label fw-bold small">Jurusan</label><input type="text" id="kelasJurusan" class="form-control form-control-sm" required oninput="updatePreviewNamaKelas()"></div>
+            </div>
+            <div class="mb-2"><label class="form-label fw-bold small">Nama Kelas</label><input type="text" id="kelasNama" class="form-control form-control-sm" required></div>
+            <div class="mb-3"><label class="form-label fw-bold small">Status</label><select id="kelasStatus" class="form-select form-select-sm"><option value="Aktif">Aktif</option><option value="Tidak Aktif">Tidak Aktif</option></select></div>
+            <button type="submit" class="btn btn-primary-custom btn-sm w-100 fw-bold">Simpan</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalPetugas" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2"><h5 class="modal-title fw-bold fs-6" id="modalPetugasTitle">Petugas</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <form id="formPetugas" onsubmit="handlePetugasSubmit(event)">
+            <input type="hidden" id="petugasId">
+            <div class="mb-2"><label class="form-label fw-bold small">Nama Petugas</label><input type="text" id="petugasNama" class="form-control form-control-sm" required></div>
+            <div class="mb-2"><label class="form-label fw-bold small">Kode Verifikasi</label><input type="text" id="petugasKode" class="form-control form-control-sm" required></div>
+            <div class="mb-3"><label class="form-label fw-bold small">Status</label><select id="petugasStatus" class="form-select form-select-sm"><option value="Aktif">Aktif</option><option value="Tidak Aktif">Tidak Aktif</option></select></div>
+            <button type="submit" class="btn btn-primary-custom btn-sm w-100 fw-bold">Simpan</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalEditAbsensi" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2">
+          <h5 class="modal-title fw-bold fs-6">Ubah Pilihan Absensi Siswa</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formEditAbsensi" onsubmit="handleEditAbsensiSubmit(event)">
+            <input type="hidden" id="editAbsenId">
+            <div class="alert alert-light border py-2 mb-2 small">
+              <strong id="editAbsenNama" class="text-primary">-</strong> (<span id="editAbsenKelas">-</span>)
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small fw-bold"><span data-uniform-label="badgeSekolah">Badge Sekolah</span></label>
+                <select class="form-select form-select-sm" id="editBadgeSekolah"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold"><span data-uniform-label="badgeOsis">Badge OSIS</span></label>
+                <select class="form-select form-select-sm" id="editBadgeOsis"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold"><span data-uniform-label="dasi">Dasi</span></label>
+                <select class="form-select form-select-sm" id="editDasi"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold"><span data-uniform-label="ikatPinggang">Ikat Pinggang</span></label>
+                <select class="form-select form-select-sm" id="editSabuk"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold"><span data-uniform-label="kaosKaki">Kaos Kaki</span></label>
+                <select class="form-select form-select-sm" id="editKaosKaki"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold"><span data-uniform-label="sepatu">Sepatu</span></label>
+                <select class="form-select form-select-sm" id="editSepatu"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold"><span data-uniform-label="atributLainnya">Atribut Lainnya</span></label>
+                <select class="form-select form-select-sm" id="editLainnya"><option value="Lengkap">Lengkap</option><option value="Tidak Lengkap">Tidak Lengkap</option></select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold"><span data-uniform-label="catatan">Catatan Seragam</span></label>
+                <input type="text" id="editKetSeragam" class="form-control form-control-sm">
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold">Status HP</label>
+                <select class="form-select form-select-sm" id="editStatusHp">
+                  <option value="HP Dikumpulkan">HP Dikumpulkan</option>
+                  <option value="HP Tidak Dikumpulkan">HP Tidak Dikumpulkan</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold">Keterangan HP</label>
+                <input type="text" id="editKetHp" class="form-control form-control-sm">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary-custom btn-sm w-100 fw-bold mt-2">Simpan Perubahan Pilihan</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalAdminUser" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2">
+          <h5 class="modal-title fw-bold fs-6" id="modalAdminUserTitle">Tambah Akun Admin</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formAdminUser" onsubmit="handleAdminUserSubmit(event)">
+            <input type="hidden" id="adminUserId">
+            <div class="mb-2">
+              <label class="form-label fw-bold small">Username</label>
+              <input type="text" id="adminUserUsername" class="form-control form-control-sm" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label fw-bold small">Password <small class="text-muted fw-normal" id="adminPassHint">(Wajib diisi)</small></label>
+              <input type="password" id="adminUserPassword" class="form-control form-control-sm">
+            </div>
+            <div class="mb-2">
+              <label class="form-label fw-bold small">Role / Hak Akses</label>
+              <select id="adminUserRole" class="form-select form-select-sm" required>
+                <option value="Anggota OSIS">Anggota OSIS</option>
+                <option value="Pengawas">Pengawas</option>
+                <option value="Developer">Developer</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Status</label>
+              <select id="adminUserStatus" class="form-select form-select-sm">
+                <option value="Aktif">Aktif</option>
+                <option value="Tidak Aktif">Tidak Aktif</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary-custom btn-sm w-100 fw-bold">Simpan Akun Admin</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentView = 'qr-scanner-pane';
+    let activePetugas = null;
+    let schoolNameGlobal = 'OSIS SMK DIAN AL MUSTARIH';
+    let listKelasPetugas = [];
+    let listSiswaMaster = [];
+    let siswaFilteredByKelas = [];
+    let attendedIdsTodaySet = new Set();
+    let recentTodayList = [];
+    let pendingScannedSiswa = null;
+
+    let isAdminLoggedIn = false;
+    let adminAuthSession = null;
+    let adminRefreshInterval = null;
+    let rawAdminData = [];
+    let rawSiswaData = [];
+    let rawKelasDetail = [];
+    let rawAdminUsers = [];
+    let rawViolationPoints = [];
+
+    let selectedFotoBase64 = "";
+    let selectedFotoExt = "";
+    const OFFLINE_QUEUE_KEY = 'osis_absensi_offline_queue_v2';
+
+    let soundEnabled = localStorage.getItem('osis_sound_enabled') !== 'false';
+    let currentTheme = localStorage.getItem('osis_theme') || 'light';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTheme(currentTheme);
+      loadUniformLabelsPublic();
+      updateSoundIcon();
+      updateOfflineQueueBadge();
+      switchMainView('qr-scanner-pane');
+
+      window.addEventListener('online', handleConnectionChange);
+      window.addEventListener('offline', handleConnectionChange);
+      handleConnectionChange();
+    });
+
+    function toggleThemeMode() {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('osis_theme', currentTheme);
+      applyTheme(currentTheme);
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const icon = document.getElementById('iconTheme');
+      if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill';
+    }
+
+    function toggleSoundSetting() {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('osis_sound_enabled', soundEnabled);
+      updateSoundIcon();
+      showToast(soundEnabled ? "Suara diaktifkan" : "Suara dinonaktifkan", "success");
+    }
+
+    function updateSoundIcon() {
+      const icon = document.getElementById('iconSound');
+      if (icon) icon.className = soundEnabled ? 'bi bi-volume-up-fill' : 'bi bi-volume-mute-fill text-white-50';
+    }
+
+    function playFeedbackTone(type) {
+      if (!soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        const now = ctx.currentTime;
+        if (type === 'success') {
+          osc.type = 'sine'; osc.frequency.setValueAtTime(660, now); osc.frequency.setValueAtTime(990, now + 0.08);
+          gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.start(now); osc.stop(now + 0.22);
+        } else {
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, now);
+          gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc.start(now); osc.stop(now + 0.28);
+        }
+      } catch (e) {}
+    }
+
+    function switchMainView(targetId) {
+      currentView = targetId;
+      document.querySelectorAll('.main-nav-btn').forEach(btn => {
+        if (btn.dataset.target === targetId) {
+          btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-primary-custom');
+        } else {
+          btn.classList.remove('btn-primary-custom'); btn.classList.add('btn-outline-primary');
+        }
+      });
+      document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.target === targetId);
+      });
+      document.querySelectorAll('.app-view').forEach(v => v.classList.add('d-none'));
+
+      if (targetId === 'admin-pane') {
+        document.getElementById('petugasGateWrapper').classList.add('d-none');
+        document.getElementById('admin-pane').classList.remove('d-none');
+      } else {
+        document.getElementById('petugasGateWrapper').classList.remove('d-none');
+        if (activePetugas) {
+          document.getElementById('petugasLoginForm').classList.add('d-none');
+          document.getElementById('petugasBannerActive').classList.remove('d-none');
+          document.getElementById(targetId).classList.remove('d-none');
+        } else {
+          document.getElementById('petugasLoginForm').classList.remove('d-none');
+          document.getElementById('petugasBannerActive').classList.add('d-none');
+        }
+      }
+    }
+
+    function showLoader(text = "Memproses...") {
+      document.getElementById('globalLoaderText').innerText = text;
+      document.getElementById('globalLoader').classList.remove('d-none');
+    }
+    function hideLoader() { document.getElementById('globalLoader').classList.add('d-none'); }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const bgClass = type === 'success' ? 'bg-success text-white' : (type === 'warning' ? 'bg-warning text-dark' : 'bg-danger text-white');
+      const icon = type === 'success' ? 'bi-check-circle-fill' : (type === 'warning' ? 'bi-exclamation-triangle-fill' : 'bi-x-octagon-fill');
+
+      const toastEl = document.createElement('div');
+      toastEl.className = `toast align-items-center ${bgClass} border-0 show mb-2 shadow`;
+      toastEl.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body fw-bold small"><i class="bi ${icon} me-2"></i>${message}</div>
+          <button type="button" class="btn-close ${type === 'warning' ? '' : 'btn-close-white'} me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+      `;
+      container.appendChild(toastEl);
+      setTimeout(() => { if (toastEl.parentNode) toastEl.remove(); }, 3500);
+    }
+
+    function loginPetugasOSIS() {
+      const kode = document.getElementById('kodePetugasInput').value.trim();
+      if (!kode) return showToast("Masukkan kode petugas!", "warning");
+
+      showLoader("Memverifikasi...");
+      google.script.run
+        .withSuccessHandler(res => {
+          hideLoader();
+          if (res.success) {
+            activePetugas = res.petugas;
+            schoolNameGlobal = res.namaSekolah || schoolNameGlobal;
+            document.getElementById('headerSchoolTitle').innerText = `OSIS ${schoolNameGlobal}`;
+            listKelasPetugas = res.listKelas || ['X KK', 'X BDP', 'XI KK', 'XI BDP', 'XII KK', 'XII BDP'];
+            listSiswaMaster = res.listSiswa || [];
+            attendedIdsTodaySet = new Set(res.attendedIdsToday || []);
+
+            document.getElementById('txtNamaPetugas').innerText = activePetugas.nama;
+            updatePetugasCountersAndHistory();
+            renderKelasButtons();
+            resetFormAbsensiLengkap();
+
+            playFeedbackTone('success');
+            showToast(`Halo, ${activePetugas.nama}!`, "success");
+            switchMainView(currentView === 'admin-pane' ? 'qr-scanner-pane' : currentView);
+          } else {
+            playFeedbackTone('error');
+            showToast(res.message, "error");
+          }
+        })
+        .withFailureHandler(err => {
+          hideLoader();
+          showToast("Gagal: " + err.message, "error");
+        })
+        .verifikasiPetugas(kode);
+    }
+
+    function logoutPetugasOSIS() {
+      activePetugas = null;
+      listSiswaMaster = [];
+      document.getElementById('kodePetugasInput').value = "";
+      switchMainView(currentView);
+    }
+
+    function updatePetugasCountersAndHistory() {
+      if (!activePetugas) return;
+      const myCount = recentTodayList.filter(r => r.idPetugas === activePetugas.id).length;
+      document.getElementById('petugasTodayCounter').innerText = myCount;
+
+      const tbody = document.getElementById('qrScanHistoryBody');
+      if (!tbody) return;
+      if (recentTodayList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-2">Belum ada siswa tercatat hari ini.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = recentTodayList.slice(0, 30).map(r => `
+        <tr>
+          <td><small class="fw-bold">${r.jam}</small></td>
+          <td class="fw-bold">${r.nama}</td>
+          <td><span class="badge bg-light text-primary border">${r.kelas}</span></td>
+          <td><span class="badge bg-info text-dark">${r.metode}</span></td>
+          <td><span class="badge bg-success">Hadir</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function refreshAttendanceSilently() {
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.success) {
+            attendedIdsTodaySet = new Set(res.attendedIdsToday || []);
+            recentTodayList = res.recentToday || [];
+            updatePetugasCountersAndHistory();
+          }
+        })
+        .getRealtimeAttendanceStatus();
+    }
+
+    function compressImageFileForQr(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_DIM = 1000;
+            let width = img.width, height = img.height;
+            if (width > MAX_DIM || height > MAX_DIM) {
+              if (width > height) { height = Math.round((height * MAX_DIM) / width); width = MAX_DIM; }
+              else { width = Math.round((width * MAX_DIM) / height); height = MAX_DIM; }
+            }
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(blob => {
+              if (!blob) return reject(new Error("Gagal kompres gambar"));
+              resolve({ file: new File([blob], "qr.jpg", { type: "image/jpeg" }), dataUrl: canvas.toDataURL('image/jpeg', 0.88) });
+            }, 'image/jpeg', 0.88);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleQrImageUpload(event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      if (!activePetugas) return showToast("Silakan login petugas terlebih dahulu!", "error");
+
+      showLoader("Membaca QR Code...");
+      try {
+        const { file: optimizedFile, dataUrl } = await compressImageFileForQr(file);
+        document.getElementById('qrImagePreviewThumb').src = dataUrl;
+        document.getElementById('qrImagePreviewWrapper').classList.remove('d-none');
+
+        const html5QrDecoder = new Html5Qrcode("qr-file-decoder-hidden");
+        const decodedText = await html5QrDecoder.scanFile(optimizedFile, false);
+        html5QrDecoder.clear();
+
+        hideLoader();
+        validateAndShowScannedForm(decodedText);
+      } catch (err) {
+        hideLoader();
+        playFeedbackTone('error');
+        showToast("QR Code tidak terdeteksi. Pastikan foto jelas dan tidak buram.", "error");
+      }
+    }
+
+    function validateAndShowScannedForm(decodedText) {
+      const cleanToken = (decodedText || '').trim();
+      const localMatch = listSiswaMaster.find(s => s.qrToken === cleanToken);
+
+      if (!localMatch) {
+        playFeedbackTone('error');
+        showToast("QR Code tidak dikenal dalam database siswa!", "error");
+        return;
+      }
+      if (attendedIdsTodaySet.has(localMatch.id)) {
+        playFeedbackTone('warning');
+        showToast(`${localMatch.nama} sudah tercatat hadir hari ini!`, "warning");
+        return;
+      }
+
+      pendingScannedSiswa = localMatch;
+      playFeedbackTone('success');
+
+      document.getElementById('qrScanPromptState').classList.add('d-none');
+      document.getElementById('qrScanFormState').classList.remove('d-none');
+      document.getElementById('scannedNamaSiswa').innerText = localMatch.nama;
+      document.getElementById('scannedKelasSiswa').innerText = localMatch.kelas;
+    }
+
+    function cancelScannedSiswa() {
+      pendingScannedSiswa = null;
+      document.getElementById('qrScanFormState').classList.add('d-none');
+      document.getElementById('qrScanPromptState').classList.remove('d-none');
+      document.getElementById('qrImagePreviewWrapper').classList.add('d-none');
+      document.getElementById('qrImagePreviewThumb').src = "";
+    }
+
+    function handleScanAbsenFinal(e) {
+      e.preventDefault();
+      if (!activePetugas || !pendingScannedSiswa) return;
+
+      const siswa = pendingScannedSiswa;
+      const payload = {
+        idPetugas: activePetugas.id,
+        namaPetugas: activePetugas.nama,
+        qrToken: siswa.qrToken,
+        idSiswa: siswa.id,
+        namaSiswa: siswa.nama,
+        kelas: siswa.kelas,
+        badgeSekolah: document.getElementById('s_attrBadgeSekolah').value,
+        badgeOsis: document.getElementById('s_attrBadgeOsis').value,
+        dasi: document.getElementById('s_attrDasi').value,
+        ikatPinggang: document.getElementById('s_attrSabuk').value,
+        kaosKaki: document.getElementById('s_attrKaosKaki').value,
+        sepatu: document.getElementById('s_attrSepatu').value,
+        atributLainnya: document.getElementById('s_attrLainnya').value,
+        customAttributes: [],
+        keterangan: document.getElementById('s_txtKeterangan').value.trim(),
+        statusHp: document.querySelector('input[name="s_statusHp"]:checked').value,
+        keteranganHp: document.getElementById('s_txtKeteranganHp').value.trim()
+      };
+
+      attendedIdsTodaySet.add(siswa.id);
+      showLoader("Menyimpan absensi...");
+      google.script.run
+        .withSuccessHandler(res => {
+          hideLoader();
+          if (res.success) {
+            recentTodayList.unshift({
+              idAbsensi: res.idAbsensi, idSiswa: siswa.id, nama: siswa.nama,
+              kelas: siswa.kelas, jam: res.jam, idPetugas: activePetugas.id,
+              namaPetugas: activePetugas.nama, metode: 'QR Code'
+            });
+            updatePetugasCountersAndHistory();
+            playFeedbackTone('success');
+            showToast(`Absensi berhasil: ${siswa.nama}`, "success");
+            cancelScannedSiswa();
+          } else {
+            attendedIdsTodaySet.delete(siswa.id);
+            playFeedbackTone('error');
+            showToast(res.message, "error");
+          }
+        })
+        .withFailureHandler(err => {
+          hideLoader();
+          showToast("Gagal: " + err.message, "error");
+        })
+        .submitAbsensi(payload);
+    }
+
+    function renderKelasButtons() {
+      const container = document.getElementById('kelasButtonGroup');
+      container.innerHTML = "";
+      listKelasPetugas.forEach(kelas => {
+        const countSiswa = listSiswaMaster.filter(s => s.kelas.toLowerCase() === kelas.toLowerCase()).length;
+        const btn = document.createElement('button');
+        btn.type = "button"; btn.className = "btn-kelas-option"; btn.dataset.kelas = kelas;
+        btn.innerHTML = `<div>${kelas}</div><span class="badge bg-light text-primary border mt-1" style="font-size: 0.65rem;">${countSiswa} Siswa</span>`;
+        btn.onclick = () => pilihKelas(kelas);
+        container.appendChild(btn);
+      });
+    }
+
+    function pilihKelas(namaKelas) {
+      document.getElementById('selectedKelasValue').value = namaKelas;
+      document.getElementById('infoKelasTerpilih').innerHTML = `<span class="badge bg-primary">${namaKelas}</span>`;
+      document.getElementById('labelKelasAktif').innerText = namaKelas;
+      document.getElementById('statusSiswaSelectedBadge').innerText = `Kelas: ${namaKelas}`;
+
+      document.querySelectorAll('.btn-kelas-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.kelas === namaKelas);
+      });
+
+      const uniqueNames = new Set();
+      siswaFilteredByKelas = [];
+      listSiswaMaster.forEach(s => {
+        if (s.kelas.toLowerCase() === namaKelas.toLowerCase()) {
+          const key = s.nama.toLowerCase();
+          if (!uniqueNames.has(key)) { uniqueNames.add(key); siswaFilteredByKelas.push(s); }
+        }
+      });
+
+      const wrapper = document.getElementById('wrapperPilihSiswa');
+      const alertKosong = document.getElementById('alertSiswaKosong');
+      const boxInput = document.getElementById('boxInputSiswa');
+      wrapper.classList.remove('d-none');
+
+      if (siswaFilteredByKelas.length === 0) {
+        alertKosong.classList.remove('d-none'); boxInput.classList.add('d-none');
+      } else {
+        alertKosong.classList.add('d-none'); boxInput.classList.remove('d-none');
+        document.getElementById('searchSiswaInput').value = "";
+        populateDropdownSiswa(siswaFilteredByKelas);
+      }
+    }
+
+    function populateDropdownSiswa(list) {
+      const select = document.getElementById('selectSiswa');
+      select.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+      let sudahCount = 0;
+      list.forEach(s => {
+        const sudah = attendedIdsTodaySet.has(s.id);
+        if (sudah) sudahCount++;
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = sudah ? `✅ [SUDAH] ${s.nama}` : `${s.nama}`;
+        if (sudah) opt.style.color = '#16a34a';
+        select.appendChild(opt);
+      });
+      document.getElementById('jumlahSiswaKelasInfo').innerText = `${list.length} siswa (${sudahCount} sudah absen)`;
+    }
+
+    function filterDropdownSiswaBySearch() {
+      const keyword = document.getElementById('searchSiswaInput').value.toLowerCase().trim();
+      const filtered = siswaFilteredByKelas.filter(s => s.nama.toLowerCase().includes(keyword) || s.id.toLowerCase().includes(keyword));
+      populateDropdownSiswa(filtered);
+    }
+
+    function onSiswaSelected() {
+      const id = document.getElementById('selectSiswa').value;
+      const badge = document.getElementById('statusSiswaSelectedBadge');
+      const target = siswaFilteredByKelas.find(s => s.id.toString() === id.toString());
+      if (!target) return;
+      if (attendedIdsTodaySet.has(target.id)) {
+        badge.className = 'badge bg-success'; badge.innerHTML = 'SUDAH ABSEN';
+      } else {
+        badge.className = 'badge bg-warning text-dark'; badge.innerHTML = 'Belum Absen';
+      }
+    }
+
+    function previewFoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      selectedFotoExt = 'jpg';
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          let width = img.width, height = img.height;
+          if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          selectedFotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          document.getElementById('imgPreview').src = selectedFotoBase64;
+          document.getElementById('uploadPlaceholder').classList.add('d-none');
+          document.getElementById('previewArea').classList.remove('d-none');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function hapusFotoPreview() {
+      selectedFotoBase64 = ""; selectedFotoExt = "";
+      document.getElementById('fotoInput').value = "";
+      document.getElementById('uploadPlaceholder').classList.remove('d-none');
+      document.getElementById('previewArea').classList.add('d-none');
+    }
+
+    function resetFormAbsensiLengkap() {
+      document.getElementById('formAbsensi').reset();
+      document.getElementById('selectedKelasValue').value = "";
+      document.getElementById('infoKelasTerpilih').innerText = "Belum dipilih";
+      document.querySelectorAll('.btn-kelas-option').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('wrapperPilihSiswa').classList.add('d-none');
+      document.getElementById('searchSiswaInput').value = "";
+      document.getElementById('selectSiswa').innerHTML = '<option value="">-- Pilih Siswa --</option>';
+      siswaFilteredByKelas = [];
+      hapusFotoPreview();
+    }
+
+    function handleAbsenSubmit(e) {
+      e.preventDefault();
+      if (!activePetugas) return showToast("Login petugas dulu!", "error");
+      const idSiswa = document.getElementById('selectSiswa').value;
+      if (!idSiswa) return showToast("Pilih nama siswa!", "warning");
+      const siswa = siswaFilteredByKelas.find(s => s.id.toString() === idSiswa.toString());
+      if (!siswa) return showToast("Siswa tidak valid", "error");
+
+      if (attendedIdsTodaySet.has(siswa.id)) {
+        playFeedbackTone('warning');
+        return showToast(`${siswa.nama} sudah absen hari ini!`, "warning");
+      }
+
+      const payload = {
+        idPetugas: activePetugas.id, namaPetugas: activePetugas.nama,
+        idSiswa: siswa.id, namaSiswa: siswa.nama, kelas: siswa.kelas,
+        badgeSekolah: document.getElementById('attrBadgeSekolah').value,
+        badgeOsis: document.getElementById('attrBadgeOsis').value,
+        dasi: document.getElementById('attrDasi').value,
+        ikatPinggang: document.getElementById('attrSabuk').value,
+        kaosKaki: document.getElementById('attrKaosKaki').value,
+        sepatu: document.getElementById('attrSepatu').value,
+        atributLainnya: document.getElementById('attrLainnya').value,
+        customAttributes: [],
+        keterangan: document.getElementById('txtKeterangan').value.trim(),
+        statusHp: document.querySelector('input[name="statusHp"]:checked').value,
+        keteranganHp: document.getElementById('txtKeteranganHp').value.trim(),
+        fotoBase64: selectedFotoBase64, fotoExt: selectedFotoExt
+      };
+
+      const btnKirim = document.getElementById('btnKirim');
+      btnKirim.disabled = true; showLoader("Menyimpan...");
+
+      google.script.run
+        .withSuccessHandler(res => {
+          hideLoader(); btnKirim.disabled = false;
+          if (res.success) {
+            attendedIdsTodaySet.add(siswa.id);
+            recentTodayList.unshift({
+              idAbsensi: res.idAbsensi, idSiswa: siswa.id, nama: siswa.nama,
+              kelas: siswa.kelas, jam: res.jam, idPetugas: activePetugas.id,
+              namaPetugas: activePetugas.nama, metode: 'Manual'
+            });
+            updatePetugasCountersAndHistory();
+            playFeedbackTone('success');
+            resetFormAbsensiLengkap();
+            showToast(res.message, "success");
+          } else {
+            playFeedbackTone('warning');
+            showToast(res.message, "warning");
+          }
+        })
+        .withFailureHandler(err => {
+          hideLoader(); btnKirim.disabled = false;
+          showToast("Gagal: " + err.message, "error");
+        })
+        .submitAbsensi(payload);
+    }
+
+    function applyAdminRolePermissions(role, username) {
+      document.getElementById('adminSidebarUsername').innerText = username;
+      document.getElementById('adminRoleLabel').innerText = role;
+      document.getElementById('bannerAdminName').innerText = username;
+      document.getElementById('bannerAdminRole').innerText = role;
+
+      const tabIds = ['tab-btn-siswa', 'tab-btn-kelas', 'tab-btn-petugas', 'tab-btn-users', 'tab-btn-absensi-control', 'tab-btn-uniform-labels', 'tab-btn-broadcast'];
+      const addIds = ['btnTambahSiswa', 'btnTambahKelas', 'btnTambahPetugas'];
+      tabIds.concat(addIds).forEach(id => document.getElementById(id).classList.add('d-none'));
+      document.getElementById('btnTambahAkunPengawas').classList.add('d-none');
+      new bootstrap.Tab(document.getElementById('tab-btn-rekap')).show();
+
+      if (role === 'Anggota OSIS') {
+        ['tab-btn-siswa', 'tab-btn-kelas', 'tab-btn-petugas'].forEach(id => document.getElementById(id).classList.remove('d-none'));
+        document.getElementById('bannerRoleDesc').innerText = 'Dapat melihat dan mengubah data siswa, kelas, petugas, serta pilihan absensi.';
+      } else if (role === 'Pengawas') {
+        ['tab-btn-siswa', 'tab-btn-kelas', 'tab-btn-petugas', 'tab-btn-absensi-control', 'tab-btn-uniform-labels', 'tab-btn-broadcast'].forEach(id => document.getElementById(id).classList.remove('d-none'));
+        addIds.forEach(id => document.getElementById(id).classList.remove('d-none'));
+        document.getElementById('btnTambahAkunPengawas').classList.remove('d-none');
+        document.getElementById('bannerRoleDesc').innerText = 'Hak akses operasional penuh untuk Dashboard, Siswa, Kelas, Petugas, dan Broadcast WA.';
+      } else if (role === 'Developer') {
+        tabIds.forEach(id => document.getElementById(id).classList.remove('d-none'));
+        addIds.forEach(id => document.getElementById(id).classList.remove('d-none'));
+        document.getElementById('bannerRoleDesc').innerText = 'Akses penuh seluruh fitur dan manajemen admin.';
+      }
+    }
+
+    function loginAdminProcess() {
+      const u = document.getElementById('adminUser').value.trim();
+      const p = document.getElementById('adminPass').value.trim();
+      if (!u || !p) return showToast("Isi username & password!", "warning");
+
+      showLoader("Memverifikasi role...");
+      google.script.run
+        .withSuccessHandler(res => {
+          hideLoader();
+          if (res.success) {
+            isAdminLoggedIn = true;
+            adminAuthSession = { username: res.username, password: p, role: res.role };
+            applyAdminRolePermissions(res.role, res.username);
+
+            document.getElementById('adminLoginForm').classList.add('d-none');
+            document.getElementById('adminDashboard').classList.remove('d-none');
+            loadDashboardData(false);
+
+            if (adminRefreshInterval) clearInterval(adminRefreshInterval);
+            adminRefreshInterval = setInterval(() => {
+              if (isAdminLoggedIn && currentView === 'admin-pane') loadDashboardData(true);
+            }, 20000);
+          } else {
+            playFeedbackTone('error'); showToast(res.message, "error");
+          }
+        })
+        .withFailureHandler(err => { hideLoader(); showToast(err.message, "error"); })
+        .loginAdmin(u, p);
+    }
+
+    function logoutAdmin() {
+      isAdminLoggedIn = false;
+      adminAuthSession = null;
+      if (adminRefreshInterval) clearInterval(adminRefreshInterval);
+      document.getElementById('adminDashboard').classList.add('d-none');
+      document.getElementById('adminLoginForm').classList.remove('d-none');
+      document.getElementById('adminPass').value = "";
+      new bootstrap.Tab(document.getElementById('tab-btn-rekap')).show();
+    }
+
+    function loadDashboardData(silent = false) {
+      if (!silent) showLoader("Memuat data...");
+      google.script.run
+        .withSuccessHandler(res => {
+          if (!silent) hideLoader();
+          if (!res.success) return showToast(res.message, "error");
+
+          schoolNameGlobal = res.namaSekolah || schoolNameGlobal;
+          attendedIdsTodaySet = new Set(res.attendedIdsToday || []);
+
+          const total = res.stats.totalSiswa || 0;
+          const sudah = res.stats.sudahAbsen || 0;
+          const pct = total > 0 ? Math.round((sudah / total) * 100) : 0;
+
+          document.getElementById('statTotal').innerText = total;
+          document.getElementById('statSudah').innerText = sudah;
+          document.getElementById('statBelum').innerText = res.stats.belumAbsen;
+          document.getElementById('statTdkLengkap').innerText = res.stats.seragamTidakLengkap;
+
+          document.getElementById('progressPercentText').innerText = `${pct}% (${sudah} / ${total})`;
+          document.getElementById('attendanceProgressBar').style.width = `${pct}%`;
+
+          renderStatistikPerKelas(res.stats.perKelas || {}, res.listKelas || []);
+          populateKelasDropdowns(res.listKelas || []);
+
+          rawAdminData = res.listRekap || [];
+          rawSiswaData = res.listSiswa || [];
+          rawKelasDetail = res.listKelasDetail || [];
+
+          applyFilter();
+          applySiswaFilter();
+          renderTabelKelas(rawKelasDetail);
+          renderTabelPetugas(res.listPetugas || []);
+        })
+        .withFailureHandler(err => {
+          if (!silent) hideLoader();
+          if (!silent) showToast("Gagal muat data: " + err.message, "error");
+        })
+        .getAdminDashboardData();
+    }
+
+    function renderStatistikPerKelas(perKelasObj, listKelas) {
+      const container = document.getElementById('kelasStatsContainer');
+      container.innerHTML = "";
+      const kelasKeys = listKelas.length > 0 ? listKelas : Object.keys(perKelasObj);
+
+      kelasKeys.forEach(k => {
+        const info = perKelasObj[k] || { totalAktif: 0, sudahAbsenHariIni: 0 };
+        const pct = info.totalAktif > 0 ? Math.round((info.sudahAbsenHariIni / info.totalAktif) * 100) : 0;
+        container.innerHTML += `
+          <div class="col-6 col-md-4 col-xl-3">
+            <div class="kelas-monitor-card">
+              <div class="d-flex justify-content-between align-items-center gap-2">
+                <div class="kelas-monitor-name">${k}</div>
+                <i class="bi bi-mortarboard-fill text-muted" style="font-size:.9rem;"></i>
+              </div>
+              <div class="kelas-monitor-count">${info.sudahAbsenHariIni} <span class="text-muted fw-normal" style="font-size:.78rem;">/ ${info.totalAktif} siswa</span></div>
+              <div class="kelas-monitor-track"><div class="kelas-monitor-fill" style="width:${pct}%;"></div></div>
+              <div class="kelas-monitor-foot"><span>${info.totalAktif > 0 ? (info.totalAktif - info.sudahAbsenHariIni) + ' belum absen' : 'Kosong'}</span><span class="badge ${pct === 100 && info.totalAktif > 0 ? 'bg-success' : 'bg-primary'}">${pct}%</span></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function populateKelasDropdowns(listKelas) {
+      const filterRekap = document.getElementById('filterKelas');
+      const filterSiswa = document.getElementById('filterSiswaKelas');
+      const modalSiswa = document.getElementById('siswaKelas');
+      const prevRekap = filterRekap.value, prevSiswa = filterSiswa.value;
+
+      filterRekap.innerHTML = '<option value="">-- Semua Kelas --</option>';
+      filterSiswa.innerHTML = '<option value="">-- Semua Kelas --</option>';
+      modalSiswa.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+
+      listKelas.forEach(k => {
+        filterRekap.innerHTML += `<option value="${k}">${k}</option>`;
+        filterSiswa.innerHTML += `<option value="${k}">${k}</option>`;
+        modalSiswa.innerHTML += `<option value="${k}">${k}</option>`;
+      });
+      filterRekap.value = prevRekap; filterSiswa.value = prevSiswa;
+    }
+
+    function loadUniformLabelsPublic() {
+      google.script.run.withSuccessHandler(res => {
+        if (res && res.success) { applyUniformLabels(res.labels); }
+      }).getUniformLabels();
+    }
+
+    function applyUniformLabels(labels) {
+      const def = { badgeSekolah:'Badge Sekolah', badgeOsis:'Badge OSIS', dasi:'Dasi', ikatPinggang:'Ikat Pinggang', kaosKaki:'Kaos Kaki', sepatu:'Sepatu', atributLainnya:'Atribut Lain', catatan:'Catatan Seragam' };
+      const cur = {...def, ...(labels || {})};
+      document.querySelectorAll('[data-uniform-label]').forEach(el => {
+        const key = el.getAttribute('data-uniform-label');
+        if (cur[key]) el.textContent = cur[key];
+      });
+    }
+
+    function loadViolationPoints() {
+      const body = document.getElementById('tabelPoinBody');
+      body.innerHTML = '<tr><td colspan="5" class="text-center">Memuat data poin...</td></tr>';
+      google.script.run.withSuccessHandler(res => {
+        if (!res || !res.success) {
+          body.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${escapeHtml(res?.message || 'Gagal')}</td></tr>`;
+          return;
+        }
+        rawViolationPoints = res.list || [];
+        document.getElementById('poinTotal').innerText = res.summary?.totalPoin || 0;
+        document.getElementById('poinSiswa').innerText = res.summary?.siswaTercatat || 0;
+        document.getElementById('poinJumlah').innerText = res.summary?.totalPelanggaran || 0;
+        filterViolationPoints();
+      }).withFailureHandler(err => {
+        body.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${escapeHtml(err.message)}</td></tr>`;
+      }).getViolationPointsData(adminAuthSession);
+    }
+
+    function filterViolationPoints() {
+      const q = (document.getElementById('filterPoinNama').value || '').toLowerCase().trim();
+      const list = rawViolationPoints.filter(x => !q || x.nama.toLowerCase().includes(q) || x.id.toLowerCase().includes(q));
+      const body = document.getElementById('tabelPoinBody');
+      if (!list.length) {
+        body.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Belum ada pelanggaran.</td></tr>';
+        return;
+      }
+      body.innerHTML = list.map((x, i) => `<tr>
+        <td><div class="fw-bold">${escapeHtml(x.nama)}</div><small class="text-muted">${escapeHtml(x.id)}</small></td>
+        <td>${escapeHtml(x.kelas)}</td><td><span class="badge bg-danger">${x.totalPoin} poin</span></td>
+        <td>${x.jumlahPelanggaran}</td><td><button class="btn btn-outline-primary btn-sm py-0" onclick="showViolationHistory('${escapeHtml(x.id)}')">Lihat</button></td>
+      `).join('');
+    }
+
+    function showViolationHistory(id) {
+      const siswa = rawViolationPoints.find(x => x.id === id);
+      if (!siswa) return;
+      document.getElementById('judulRiwayatPoin').innerText = `Riwayat Pelanggaran: ${siswa.nama} (${siswa.kelas})`;
+      document.getElementById('riwayatPoinBody').innerHTML = (siswa.riwayat || []).map(r => `<tr><td>${escapeHtml(r.tanggal)}</td><td>${escapeHtml(r.jam)}</td><td>${escapeHtml(r.detail)}</td><td><span class="badge bg-danger">${r.poin}</span></td></tr>`).join('');
+      document.getElementById('detailRiwayatPoin').style.display = 'block';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function getFilteredRekapForExport() {
+      const nama = document.getElementById('filterNama').value.toLowerCase();
+      const kelas = document.getElementById('filterKelas').value;
+      const tgl = document.getElementById('filterTanggal').value;
+      const srgm = document.getElementById('filterSeragam').value;
+      const statusHp = document.getElementById('filterStatusHp').value;
+
+      return rawAdminData.filter(item => {
+        const matchNama = item.nama.toLowerCase().includes(nama) || item.namaPetugas.toLowerCase().includes(nama);
+        const matchKelas = !kelas || item.kelas === kelas;
+        const matchTgl = !tgl || item.tanggal === tgl;
+        const matchSrgm = !srgm || item.statusSeragam === srgm;
+        const matchHp = !statusHp || item.statusHp === statusHp;
+        return matchNama && matchKelas && matchTgl && matchSrgm && matchHp;
+      });
+    }
+
+    function applyFilter() { renderTabel(getFilteredRekapForExport()); }
+
+    function renderTabel(data) {
+      const tbody = document.getElementById('tabelRekapBody');
+      tbody.innerHTML = "";
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-3">Tidak ada data rekap.</td></tr>';
+        return;
+      }
+      data.slice(0, 150).forEach((item, index) => {
+        const bgSeragam = item.statusSeragam === 'Lengkap' ? 'bg-success' : 'bg-danger';
+        const bgHp = item.statusHp === 'HP Dikumpulkan' ? 'bg-success' : 'bg-secondary';
+        const fotoHtml = item.fotoUrl ? `<button class="btn btn-sm btn-outline-primary py-0 px-1" style="font-size:0.7rem;" onclick="showFotoModal('${item.fotoUrl}', '${item.nama}')"><i class="bi bi-image"></i></button>` : '-';
+        const btnEditPilihan = `<button class="btn btn-sm btn-warning text-dark fw-bold py-0 px-2" style="font-size:0.7rem;" onclick="openEditAbsensiModal('${item.id}')"><i class="bi bi-sliders"></i> Ubah</button>`;
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${index + 1}</td><td>${fotoHtml}</td><td class="fw-bold">${item.nama}</td>
+            <td><span class="badge bg-light text-primary border">${item.kelas}</span></td>
+            <td><span class="badge bg-info text-dark">QR/Manual</span></td>
+            <td>${item.namaPetugas}</td><td>${item.tanggal}</td><td>${item.jamDatang}</td>
+            <td><span class="badge ${bgSeragam}">${item.statusSeragam}</span></td>
+            <td><span class="badge ${bgHp}">${item.statusHp}</span></td>
+            <td><small>${item.keterangan || '-'}</small></td>
+            <td>${btnEditPilihan}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function openEditAbsensiModal(idAbsensi) {
+      const item = rawAdminData.find(r => r.id === idAbsensi);
+      if (!item) return;
+      document.getElementById('editAbsenId').value = item.id;
+      document.getElementById('editAbsenNama').innerText = item.nama;
+      document.getElementById('editAbsenKelas').innerText = item.kelas;
+      new bootstrap.Modal(document.getElementById('modalEditAbsensi')).show();
+    }
+
+    function handleEditAbsensiSubmit(e) {
+      e.preventDefault();
+      if (!adminAuthSession) return showToast("Sesi berakhir!", "error");
+      const payload = {
+        auth: adminAuthSession,
+        id: document.getElementById('editAbsenId').value,
+        badgeSekolah: document.getElementById('editBadgeSekolah').value,
+        badgeOsis: document.getElementById('editBadgeOsis').value,
+        dasi: document.getElementById('editDasi').value,
+        ikatPinggang: document.getElementById('editSabuk').value,
+        kaosKaki: document.getElementById('editKaosKaki').value,
+        sepatu: document.getElementById('editSepatu').value,
+        atributLainnya: document.getElementById('editLainnya').value,
+        keterangan: document.getElementById('editKetSeragam').value.trim(),
+        statusHp: document.getElementById('editStatusHp').value,
+        keteranganHp: document.getElementById('editKetHp').value.trim()
+      };
+      showLoader("Menyimpan pilihan...");
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (res.success) {
+          showToast(res.message, "success");
+          bootstrap.Modal.getInstance(document.getElementById('modalEditAbsensi')).hide();
+          loadDashboardData(false);
+        } else {
+          showToast(res.message, "error");
+        }
+      }).updateDataAbsensi(payload);
+    }
+
+    function exportToPDF() {
+      const dataExport = getFilteredRekapForExport();
+      if (dataExport.length === 0) return showToast("Tidak ada data untuk PDF!", "warning");
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const filterTglVal = document.getElementById('filterTanggal').value || new Date().toISOString().slice(0, 10);
+
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.text(`LAPORAN REKAPITULASI ABSENSI & KEDISIPLINAN SISWA`, 14, 14);
+      doc.setFontSize(10); doc.text(`OSIS ${schoolNameGlobal}`, 14, 20);
+
+      const rows = dataExport.map((r, idx) => [idx + 1, r.tanggal, r.jamDatang, r.idSiswa, r.nama, r.kelas, 'Hadir', r.statusSeragam, r.statusHp, r.namaPetugas]);
+      doc.autoTable({
+        startY: 25,
+        head: [['No', 'Tanggal', 'Jam', 'ID', 'Nama Siswa', 'Kelas', 'Status', 'Seragam', 'HP', 'Petugas']],
+        body: rows,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [11, 77, 162], textColor: 255 }
+      });
+      doc.save(`Laporan_Absensi_${filterTglVal}.pdf`);
+      showToast("PDF berhasil diunduh!", "success");
+    }
+
+    function exportToCSV() {
+      const dataExport = getFilteredRekapForExport();
+      if (dataExport.length === 0) return showToast("Tidak ada data!", "warning");
+      let csvContent = "\uFEFFNo,Tanggal,Jam,ID Siswa,Nama Siswa,Kelas,Petugas,Seragam,HP,Keterangan\n";
+      dataExport.forEach((r, idx) => {
+        csvContent += `"${idx + 1}","${r.tanggal}","${r.jamDatang}","${r.idSiswa}","${r.nama}","${r.kelas}","${r.namaPetugas}","${r.statusSeragam}","${r.statusHp}","${r.keterangan}"\n`;
+      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
+      link.download = `Absensi_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+    }
+
+    function exportToExcel() {
+      const dataExport = getFilteredRekapForExport();
+      if (dataExport.length === 0) return showToast("Tidak ada data!", "warning");
+      let tableHtml = `<table border="1"><thead><tr style="background:#0b4da2;color:#fff;"><th>No</th><th>Tanggal</th><th>Jam</th><th>ID</th><th>Nama</th><th>Kelas</th><th>Petugas</th><th>Seragam</th><th>HP</th><th>Keterangan</th></tr></thead><tbody>`;
+      dataExport.forEach((r, idx) => {
+        tableHtml += `<tr><td>${idx + 1}</td><td>${r.tanggal}</td><td>${r.jamDatang}</td><td>${r.idSiswa}</td><td>${r.nama}</td><td>${r.kelas}</td><td>${r.namaPetugas}</td><td>${r.statusSeragam}</td><td>${r.statusHp}</td><td>${r.keterangan}</td></tr>`;
+      });
+      tableHtml += `</tbody></table>`;
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([(`\uFEFF<html><head><meta charset="UTF-8"></head><body>${tableHtml}</body></html>`)], { type: 'application/vnd.ms-excel' }));
+      link.download = `Absensi_${new Date().toISOString().slice(0, 10)}.xls`;
+      link.click();
+    }
+
+    function applySiswaFilter() {
+      const nama = document.getElementById('filterSiswaNama').value.toLowerCase();
+      const kelas = document.getElementById('filterSiswaKelas').value;
+      const statusHadir = document.getElementById('filterSiswaStatusHadir').value;
+      const filtered = rawSiswaData.filter(s => {
+        const matchNama = s.nama.toLowerCase().includes(nama) || s.id.toLowerCase().includes(nama);
+        const matchKelas = !kelas || s.kelas === kelas;
+        const isHadir = attendedIdsTodaySet.has(s.id);
+        const matchHadir = !statusHadir || (statusHadir === 'SUDAH' && isHadir) || (statusHadir === 'BELUM' && !isHadir);
+        return matchNama && matchKelas && matchHadir;
+      });
+      renderTabelSiswa(filtered);
+    }
+
+    function renderTabelSiswa(list) {
+      const tbody = document.getElementById('tabelSiswaBody');
+      tbody.innerHTML = "";
+      if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Tidak ada siswa.</td></tr>'; return; }
+      list.forEach(s => {
+        const isHadir = attendedIdsTodaySet.has(s.id);
+        const badgeHadir = isHadir ? '<span class="badge bg-success">Hadir</span>' : '<span class="badge bg-light text-secondary border">Belum</span>';
+        tbody.innerHTML += `
+          <tr>
+            <td><code>${s.id}</code></td><td class="fw-bold">${s.nama}</td>
+            <td><span class="badge bg-light text-primary border">${s.kelas}</span></td>
+            <td>${badgeHadir}</td>
+            <td><button class="btn btn-sm btn-outline-dark py-0 px-1" style="font-size:0.75rem;" onclick="openSingleQrModal('${s.id}')"><i class="bi bi-qr-code"></i></button></td>
+            <td>-</td>
+          </tr>
+        `;
+      });
+    }
+
+    function openSingleQrModal(idSiswa) {
+      const siswa = rawSiswaData.find(s => s.id === idSiswa);
+      if (!siswa) return;
+      renderQrCardsToModal([siswa], `QR - ${siswa.nama}`);
+    }
+
+    function openPrintAllQrModal() {
+      const kelasFilter = document.getElementById('filterSiswaKelas').value;
+      const listToPrint = rawSiswaData.filter(s => s.status === 'Aktif' && (!kelasFilter || s.kelas === kelasFilter));
+      if (listToPrint.length === 0) return showToast("Tidak ada siswa aktif!", "warning");
+      renderQrCardsToModal(listToPrint, `Cetak QR (${kelasFilter || 'Semua Kelas'})`);
+    }
+
+    function renderQrCardsToModal(students, title) {
+      document.getElementById('modalQrTitle').innerText = title;
+      document.getElementById('printSchoolHeader').innerText = `KARTU ABSENSI - ${schoolNameGlobal}`;
+      document.getElementById('printClassSubheader').innerText = `Total: ${students.length} Siswa`;
+      const grid = document.getElementById('qrCardsGrid');
+      grid.innerHTML = "";
+      students.forEach((s, idx) => {
+        const col = document.createElement('div');
+        col.className = students.length === 1 ? 'col-8 col-md-5' : 'col-6 col-md-4 col-lg-3';
+        col.innerHTML = `
+          <div class="border rounded p-2 text-center bg-white text-dark mb-2">
+            <div class="fw-bold text-primary small mb-1" style="font-size:0.7rem;">OSIS ${schoolNameGlobal}</div>
+            <div id="qrBox_${idx}" class="d-flex justify-content-center my-1"></div>
+            <div class="fw-bold text-truncate small" style="font-size:0.75rem;">${s.nama}</div>
+            <div class="small text-muted" style="font-size:0.65rem;">${s.kelas}</div>
+          </div>
+        `;
+        grid.appendChild(col);
+        new QRCode(document.getElementById(`qrBox_${idx}`), {
+          text: s.qrToken, width: 95, height: 95, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M
+        });
+      });
+      new bootstrap.Modal(document.getElementById('modalQrViewer')).show();
+    }
+
+    function openModalSiswa() {
+      document.getElementById('modalSiswaTitle').innerText = "Tambah Siswa";
+      document.getElementById('formSiswa').reset();
+      document.getElementById('siswaId').value = "";
+      new bootstrap.Modal(document.getElementById('modalSiswa')).show();
+    }
+
+    function handleSiswaSubmit(e) {
+      e.preventDefault();
+      if (!adminAuthSession) return showToast("Sesi berakhir!", "error");
+      const payload = {
+        auth: adminAuthSession,
+        id: document.getElementById('siswaId').value,
+        nama: document.getElementById('siswaNama').value.trim(),
+        kelas: document.getElementById('siswaKelas').value.trim(),
+        status: document.getElementById('siswaStatus').value,
+        waOrtu: document.getElementById('siswaWaOrtu').value.trim()
+      };
+      showLoader("Menyimpan...");
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (res.success) {
+          showToast(res.message, "success");
+          bootstrap.Modal.getInstance(document.getElementById('modalSiswa')).hide();
+          loadDashboardData(false);
+        } else showToast(res.message, "error");
+      }).simpanDataSiswa(payload);
+    }
+
+    function renderTabelKelas(list) {
+      const tbody = document.getElementById('tabelKelasBody');
+      tbody.innerHTML = list.map(k => `
+        <tr>
+          <td><code>${k.id}</code></td><td>${k.tingkat}</td><td>${k.jurusan}</td>
+          <td class="fw-bold text-primary">${k.namaKelas}</td>
+          <td><span class="badge ${k.status === 'Aktif' ? 'bg-success' : 'bg-secondary'}">${k.status}</span></td>
+          <td>-</td>
+        </tr>
+      `).join('');
+    }
+
+    function updatePreviewNamaKelas() {
+      const t = document.getElementById('kelasTingkat').value;
+      const j = document.getElementById('kelasJurusan').value.trim().toUpperCase();
+      document.getElementById('kelasNama').value = j ? `${t} ${j}` : t;
+    }
+
+    function openModalKelas() {
+      document.getElementById('modalKelasTitle').innerText = "Tambah Kelas";
+      document.getElementById('formKelas').reset();
+      document.getElementById('kelasId').value = "";
+      new bootstrap.Modal(document.getElementById('modalKelas')).show();
+    }
+
+    function handleKelasSubmit(e) {
+      e.preventDefault();
+      if (!adminAuthSession) return showToast("Sesi berakhir!", "error");
+      const payload = {
+        auth: adminAuthSession,
+        id: document.getElementById('kelasId').value,
+        tingkat: document.getElementById('kelasTingkat').value,
+        jurusan: document.getElementById('kelasJurusan').value,
+        namaKelas: document.getElementById('kelasNama').value,
+        status: document.getElementById('kelasStatus').value
+      };
+      showLoader("Menyimpan...");
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (res.success) {
+          showToast(res.message, "success");
+          bootstrap.Modal.getInstance(document.getElementById('modalKelas')).hide();
+          loadDashboardData(false);
+        } else showToast(res.message, "error");
+      }).simpanDataKelas(payload);
+    }
+
+    function renderTabelPetugas(list) {
+      const tbody = document.getElementById('tabelPetugasBody');
+      tbody.innerHTML = list.map(p => `
+        <tr>
+          <td><code>${p.id}</code></td><td class="fw-bold">${p.nama}</td><td><code>${p.kode}</code></td>
+          <td><span class="badge bg-primary">${p.todayCount}</span></td>
+          <td><span class="badge bg-light text-dark border">${p.totalAll}</span></td>
+          <td><span class="badge ${p.status === 'Aktif' ? 'bg-success' : 'bg-secondary'}">${p.status}</span></td>
+          <td>-</td>
+        </tr>
+      `).join('');
+    }
+
+    function openModalPetugas() {
+      document.getElementById('modalPetugasTitle').innerText = "Tambah Petugas";
+      document.getElementById('formPetugas').reset();
+      document.getElementById('petugasId').value = "";
+      new bootstrap.Modal(document.getElementById('modalPetugas')).show();
+    }
+
+    function handlePetugasSubmit(e) {
+      e.preventDefault();
+      if (!adminAuthSession) return showToast("Sesi berakhir!", "error");
+      const payload = {
+        auth: adminAuthSession,
+        id: document.getElementById('petugasId').value,
+        nama: document.getElementById('petugasNama').value.trim(),
+        kode: document.getElementById('petugasKode').value.trim(),
+        status: document.getElementById('petugasStatus').value
+      };
+      showLoader("Menyimpan...");
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (res.success) {
+          showToast(res.message, "success");
+          bootstrap.Modal.getInstance(document.getElementById('modalPetugas')).hide();
+          loadDashboardData(false);
+        } else showToast(res.message, "error");
+      }).simpanPetugasOSIS(payload);
+    }
+
+    function openModalTambahAkunPengawas() {
+      document.getElementById('modalAdminUserTitle').innerText = 'Tambah Akun';
+      document.getElementById('formAdminUser').reset();
+      document.getElementById('adminUserId').value = '';
+      document.getElementById('adminUserPassword').required = true;
+      new bootstrap.Modal(document.getElementById('modalAdminUser')).show();
+    }
+
+    function loadAdminAccounts() {
+      if (!adminAuthSession || adminAuthSession.role !== 'Developer') return;
+      google.script.run.withSuccessHandler(res => {
+        if (res.success) {
+          rawAdminUsers = res.listAdmin || [];
+          renderTabelAdminUsers(rawAdminUsers);
+        }
+      }).getAdminAccounts(adminAuthSession);
+    }
+
+    function renderTabelAdminUsers(list) {
+      const tbody = document.getElementById('tabelAdminUsersBody');
+      tbody.innerHTML = list.map(a => `
+        <tr>
+          <td><code>${a.id}</code></td><td class="fw-bold">${a.username}</td>
+          <td><span class="badge bg-primary">${a.role}</span></td>
+          <td><span class="badge ${a.status === 'Aktif' ? 'bg-success' : 'bg-secondary'}">${a.status}</span></td>
+          <td>-</td>
+        </tr>
+      `).join('');
+    }
+
+    function openModalAdminUser() {
+      if (!adminAuthSession || adminAuthSession.role !== 'Developer') return;
+      document.getElementById('modalAdminUserTitle').innerText = "Tambah Akun Admin";
+      document.getElementById('formAdminUser').reset();
+      new bootstrap.Modal(document.getElementById('modalAdminUser')).show();
+    }
+
+    function handleAdminUserSubmit(e) {
+      e.preventDefault();
+      const isPengawas = adminAuthSession.role === 'Pengawas';
+      const payload = {
+        auth: adminAuthSession,
+        id: isPengawas ? '' : document.getElementById('adminUserId').value,
+        username: document.getElementById('adminUserUsername').value.trim(),
+        password: document.getElementById('adminUserPassword').value.trim(),
+        role: document.getElementById('adminUserRole').value,
+        status: document.getElementById('adminUserStatus').value
+      };
+      showLoader('Menyimpan...');
+      const runner = google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (res.success) {
+          showToast(res.message, 'success');
+          bootstrap.Modal.getInstance(document.getElementById('modalAdminUser')).hide();
+          if (!isPengawas) loadAdminAccounts();
+        } else showToast(res.message, 'error');
+      });
+      if (isPengawas) runner.tambahAkunAdminPengawas(payload);
+      else runner.simpanAkunAdmin(payload);
+    }
+
+    function showFotoModal(url, nama) {
+      document.getElementById('modalFotoTitle').innerText = "Foto - " + nama;
+      document.getElementById('imgFullSize').src = url;
+      document.getElementById('btnOpenDrive').href = url;
+      new bootstrap.Modal(document.getElementById('modalFoto')).show();
+    }
+
+    // BROADCAST WHATSAPP
+    let broadcastSelectedIds = new Set();
+    function initBroadcastTab() {
+      const selectKelas = document.getElementById('broadcastTargetKelas');
+      if (selectKelas) {
+        const kelasUnik = [...new Set(rawSiswaData.map(s => s.kelas).filter(Boolean))].sort();
+        selectKelas.innerHTML = '<option value="">-- Semua Kelas --</option>' +
+          kelasUnik.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
+      }
+      renderBroadcastManualCheckboxes();
+      onBroadcastTargetModeChange();
+      updateBroadcastMessagePreview();
+    }
+
+    function onBroadcastTargetModeChange() {
+      const mode = document.getElementById('broadcastTargetMode').value;
+      document.getElementById('broadcastKelasWrapper').style.display = ['KELAS', 'BELUM_ABSEN', 'SERAGAM_KURANG'].includes(mode) ? 'block' : 'none';
+      document.getElementById('broadcastManualSelectBox').style.display = mode === 'MANUAL_SELECT' ? 'block' : 'none';
+      updateBroadcastPreviewCount();
+    }
+
+    function renderBroadcastManualCheckboxes() {
+      const container = document.getElementById('broadcastSiswaCheckboxList');
+      if (!container) return;
+      const kw = (document.getElementById('broadcastSearchSiswa').value || '').toLowerCase().trim();
+      const siswaWithWa = rawSiswaData.filter(s => s.status === 'Aktif' && s.waOrtu && (!kw || s.nama.toLowerCase().includes(kw)));
+      container.innerHTML = siswaWithWa.map(s => `
+        <div class="col-md-6">
+          <label class="d-flex align-items-center gap-2 p-1.5 rounded border bg-white small" style="cursor:pointer;">
+            <input type="checkbox" class="form-check-input mt-0" value="${escapeHtml(s.id)}" ${broadcastSelectedIds.has(s.id) ? 'checked' : ''} onchange="toggleBroadcastStudent('${escapeHtml(s.id)}', this.checked)">
+            <span class="text-truncate fw-semibold">${escapeHtml(s.nama)}</span>
+            <span class="badge bg-light text-primary border ms-auto">${escapeHtml(s.kelas)}</span>
+          </label>
+        </div>
+      `).join('') || '<div class="col-12 text-muted small py-2 text-center">Tidak ada siswa dengan no WA.</div>';
+    }
+
+    function toggleBroadcastStudent(id, checked) {
+      if (checked) broadcastSelectedIds.add(id); else broadcastSelectedIds.delete(id);
+      updateBroadcastPreviewCount();
+    }
+
+    function getEligibleBroadcastStudents() {
+      const mode = document.getElementById('broadcastTargetMode').value;
+      const kelas = document.getElementById('broadcastTargetKelas').value;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const seragamKurangIds = new Set(rawAdminData.filter(r => r.tanggal === todayStr && r.statusSeragam === 'Tidak Lengkap').map(r => r.idSiswa));
+
+      return rawSiswaData.filter(s => {
+        if (s.status !== 'Aktif' || !s.waOrtu) return false;
+        if (mode === 'ALL') return true;
+        if (mode === 'KELAS') return !kelas || s.kelas === kelas;
+        if (mode === 'BELUM_ABSEN') return (!kelas || s.kelas === kelas) && !attendedIdsTodaySet.has(s.id);
+        if (mode === 'SERAGAM_KURANG') return (!kelas || s.kelas === kelas) && seragamKurangIds.has(s.id);
+        if (mode === 'MANUAL_SELECT') return broadcastSelectedIds.has(s.id);
+        return false;
+      });
+    }
+
+    function updateBroadcastPreviewCount() {
+      const list = getEligibleBroadcastStudents();
+      document.getElementById('broadcastTargetCountBadge').innerText = `${list.length} Penerima Siap`;
+      updateBroadcastMessagePreview();
+    }
+
+    function applyBroadcastTemplate(type) {
+      const textarea = document.getElementById('broadcastPesanText');
+      if (type === 'pengumuman') {
+        textarea.value = '📢 *INFORMASI SEKOLAH*\nAssalamu’alaikum.\nYth. Orang Tua/Wali *{nama}* (Kelas *{kelas}*),\n[Isi pesan]\nTerima kasih.';
+      } else if (type === 'belum_absen') {
+        textarea.value = '⏰ *KONFIRMASI KEHADIRAN*\nYth. Orang Tua/Wali dari *{nama}* (*{kelas}*),\nAnanda belum tercatat hadir di sekolah hari ini.\nTerima kasih.';
+      } else if (type === 'seragam') {
+        textarea.value = '👔 *KEDISIPLINAN SERAGAM*\nYth. Orang Tua/Wali dari *{nama}* (*{kelas}*),\nTerdapat atribut seragam ananda yang kurang lengkap hari ini.\nTerima kasih.';
+      }
+      updateBroadcastMessagePreview();
+    }
+
+    function updateBroadcastMessagePreview() {
+      const previewEl = document.getElementById('broadcastLivePreview');
+      const rawText = document.getElementById('broadcastPesanText').value || '';
+      if (!rawText.trim()) { previewEl.innerText = '-'; return; }
+      const eligible = getEligibleBroadcastStudents();
+      const sample = eligible[0] || { nama: 'Ahmad', kelas: 'XI KK' };
+      previewEl.innerText = rawText.replace(/\{nama\}/gi, sample.nama).replace(/\{kelas\}/gi, sample.kelas);
+    }
+
+    function handleKirimBroadcastWa(e) {
+      e.preventDefault();
+      const eligible = getEligibleBroadcastStudents();
+      if (eligible.length === 0) return showToast('Tidak ada penerima valid!', 'warning');
+      if (!confirm(`Kirim WhatsApp ke ${eligible.length} orang tua?`)) return;
+
+      const btn = document.getElementById('btnKirimBroadcast');
+      btn.disabled = true; showLoader('Mengirim broadcast...');
+
+      google.script.run
+        .withSuccessHandler(res => {
+          hideLoader(); btn.disabled = false;
+          showToast(res.message, res.success ? 'success' : 'error');
+        })
+        .withFailureHandler(err => {
+          hideLoader(); btn.disabled = false;
+          showToast('Gagal: ' + err.message, 'error');
+        })
+        .kirimBroadcastWaOrtu({
+          auth: adminAuthSession,
+          targetMode: document.getElementById('broadcastTargetMode').value,
+          targetKelas: document.getElementById('broadcastTargetKelas').value,
+          selectedIds: Array.from(broadcastSelectedIds),
+          pesan: document.getElementById('broadcastPesanText').value.trim()
+        });
+    }
+
+    function loadAttendanceControl() {
+      google.script.run.withSuccessHandler(res => {
+        if (res.success) updateAttendanceControlUI(res.enabled);
+      }).getAttendanceControlStatus(adminAuthSession);
+    }
+    function updateAttendanceControlUI(enabled) {
+      const sw = document.getElementById('attendanceEnabledSwitch');
+      const badge = document.getElementById('attendanceStatusBadge');
+      if (!sw || !badge) return;
+      sw.checked = !!enabled; sw.disabled = false;
+      badge.className = enabled ? 'badge bg-success' : 'badge bg-danger';
+      badge.innerText = enabled ? 'ABSENSI DIBUKA' : 'ABSENSI DITUTUP';
+    }
+    function handleAttendanceToggle(enabled) {
+      google.script.run.withSuccessHandler(res => {
+        if (res.success) { updateAttendanceControlUI(res.enabled); showToast(res.message, 'success'); }
+      }).setAttendanceEnabled(adminAuthSession, enabled);
+    }
+    function loadUniformLabelsAdmin() {
+      google.script.run.withSuccessHandler(res => {
+        if (res && res.success) {
+          Object.keys(res.labels).forEach(k => {
+            const el = document.getElementById('uniformLabel_' + k);
+            if (el) el.value = res.labels[k];
+          });
+        }
+      }).getUniformLabels();
+    }
+    function saveUniformLabelsAdmin() {
+      const labels = {};
+      ['badgeSekolah','badgeOsis','dasi','ikatPinggang','kaosKaki','sepatu','atributLainnya','catatan'].forEach(k => {
+        const el = document.getElementById('uniformLabel_' + k);
+        if (el) labels[k] = el.value.trim();
+      });
+      google.script.run.withSuccessHandler(res => {
+        if (res.success) { applyUniformLabels(res.labels); showToast('Atribut disimpan!', 'success'); }
+      }).saveUniformLabels(adminAuthSession, { labels, customAttributes: [] });
+    }
+
+    function handleConnectionChange() {
+      const badge = document.getElementById('networkStatusBadge');
+      if (navigator.onLine) {
+        badge.className = 'badge bg-success';
+        badge.innerHTML = '<bi class="bi bi-wifi"></bi> Online';
+      } else {
+        badge.className = 'badge bg-danger';
+        badge.innerHTML = '<bi class="bi bi-wifi-off"></bi> Offline';
+      }
+    }
+
+    function updateOfflineQueueBadge() {}
+    function syncOfflineQueue() {}
+  </script>
+</body>
+</html>

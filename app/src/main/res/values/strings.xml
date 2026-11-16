@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Absensi OSIS</string>
+    <string name="school_default_name">SMK DIAN AL MUSTARIH</string>
+    <string name="nav_scan_qr">Scan QR</string>
+    <string name="nav_manual">Manual</string>
+    <string name="nav_admin">Admin</string>
+    <string name="camera_permission_rationale">Izin kamera diperlukan untuk memindai kartu QR Code siswa secara langsung.</string>
+</resources>

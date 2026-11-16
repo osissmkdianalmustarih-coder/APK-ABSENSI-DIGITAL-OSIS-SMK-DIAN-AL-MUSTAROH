@@ -1,0 +1,6 @@
+{
+  "name": "Absensi OSIS",
+  "description": "Sistem Absensi Siswa Sekolah, Pemeriksaan Seragam, QR Code, Poin Pelanggaran & Broadcast WA Orang Tua untuk Petugas OSIS dan Administrator SMK Dian Al Mustarih.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
